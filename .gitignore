@@ -1,0 +1,43 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.Python
+.venv/
+venv/
+env/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*~
+
+# Project data (LIARArg CSV + parsed splits — keep out of the repo)
+data/data.csv
+data/*.jsonl
+
+# Retrieval index (large: ~150 MB of dense embeddings)
+outputs/index/
+
+# Pipeline results (contain data snippets that should be regenerated
+# locally rather than checked in). Keep a placeholder file so the dir
+# exists in the repo.
+outputs/results/predictions*.jsonl
+outputs/results/audit.csv
+outputs/results/audit.md
+
+# Logs
+*.log
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_meta
+
+# Hugging Face / Torch caches if they end up in the project
+.cache/

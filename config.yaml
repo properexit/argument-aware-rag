@@ -1,0 +1,52 @@
+# Phase 1 configuration
+
+data:
+  csv_path: "../uploads/data.csv"           # resolved relative to scripts/
+  workspace_data_dir: "data"                # split outputs land here
+  filter_low_quality: true                  # drop Insufficient / Bad / Not Understandable
+  split:
+    test_frac: 0.15
+    val_frac: 0.10
+    random_state: 42
+    stratify_by: "label"
+
+retriever:
+  bm25:
+    enabled: true
+  dense:
+    enabled: true
+    model_name: "sentence-transformers/all-MiniLM-L6-v2"
+    batch_size: 64
+    device: "cpu"        # set to "cuda" if available
+  fusion:
+    method: "rrf"
+    rrf_k: 60
+  top_k_per_query: 20
+  final_top_k: 5
+
+reranker:
+  enabled: true
+  model_name: "cross-encoder/nli-deberta-v3-small"
+  device: "cpu"
+  # weighting between RRF score and NLI role-fit score
+  role_weight: 0.7
+  rrf_weight: 0.3
+
+verifier:
+  # one of: "stub", "ollama", "anthropic", "openai"
+  backend: "stub"
+  ollama:
+    base_url: "http://localhost:11434"
+    model: "llama3.1:8b-instruct"
+  max_evidence_per_role: 3
+
+evaluation:
+  labels:
+    - "True"
+    - "Mostly-true"
+    - "Half-true"
+    - "Barely-true"
+    - "False"
+    - "Pants-fire"
+  extreme_labels: ["True", "False", "Pants-fire"]
+  intermediate_labels: ["Mostly-true", "Half-true", "Barely-true"]
