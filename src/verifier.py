@@ -13,6 +13,7 @@ Three backends are supported:
 from __future__ import annotations
 
 import json
+import math
 import os
 import re
 from dataclasses import dataclass
@@ -23,6 +24,19 @@ from .query_gen import TargetedQuery
 
 
 LABELS = ["True", "Mostly-true", "Half-true", "Barely-true", "False", "Pants-fire"]
+
+# Approximate positions of each label on the structural-signal axis
+# (signal in [-1, +1], where +1 = pure support, -1 = pure attack).
+# Used by the probabilistic structural prior to compute a smooth
+# distribution over labels instead of a single discrete choice.
+LABEL_POSITION_ON_SIGNAL = {
+    "True":        +0.8,
+    "Mostly-true": +0.4,
+    "Half-true":   +0.1,
+    "Barely-true": -0.1,
+    "False":       -0.4,
+    "Pants-fire":  -0.8,
+}
 
 
 @dataclass
@@ -132,9 +146,16 @@ _SYSTEM_PROMPT = """You are a PolitiFact-style fact-checking analyst. You will r
 - A CLAIM being fact-checked
 - A set of EVIDENCE passages, each tagged with its argumentative ROLE
   (support / attack / partial_support / partial_attack / topical)
-- Optionally, a STRUCTURAL_PRIOR — the label that would follow purely from
-  counting support vs attack relations. Treat this as a strong prior. Override
-  it only if the evidence text clearly contradicts the structural balance.
+- Optionally, a STRUCTURAL_PRIOR derived purely from the support/attack
+  balance. It comes in one of two formats:
+    * A single label (or "uncertain (mixed evidence)") — a discrete hint.
+    * A probability distribution across the 6 labels — a soft hint
+      showing the structural uncertainty as percentages. When you see a
+      probability distribution, the SHAPE matters: a peaked distribution
+      is a strong hint; a flat or two-peaked distribution means the
+      structure is ambiguous and you must decide from the evidence text.
+  Treat the prior as a starting point, not a final answer. Override it
+  when the evidence text qualifies or contradicts it.
 
 Your task: assign exactly one label from this 6-point scale:
   True, Mostly-true, Half-true, Barely-true, False, Pants-fire
@@ -179,9 +200,27 @@ DECISION HEURISTIC:
        - Element of truth but misleads overall        -> Barely-true
        - Central assertion is wrong                   -> False
        - Central assertion is wrong AND absurd        -> Pants-fire
-  3. Only after answering steps 1 and 2 should you tally support vs
-     attack counts. The counts inform the verdict; they do not dictate
-     it.
+
+  3. CALIBRATION STEP (use this when the evidence is mixed):
+       - If confirming evidence exists AND attacks are minor caveats
+         (low role-fit, address details not the central claim)
+         -> choose **Mostly-true**.
+       - If both confirmations and serious contradictions exist on the
+         central claim
+         -> choose **Half-true**.
+       - If only a small kernel of truth survives once caveats are
+         applied, and the framing misleads
+         -> choose **Barely-true**.
+
+  4. STRENGTH-OF-EVIDENCE CHECK:
+       Read the (evidence balance: ...) header. High mean role-fit means
+       the passages strongly play their role (clear support / clear
+       refutation). Low mean role-fit (< 0.55) means the passages are
+       weak — likely caveats or topical context, NOT decisive. Calibrate
+       toward the middle of the scale in low-confidence cases.
+
+  5. Only after steps 1–4 should you weight the support vs attack
+     counts. The counts inform the verdict; they do not dictate it.
 
 FEW-SHOT EXAMPLES (cover all six labels):
 
@@ -235,17 +274,127 @@ Reply with a strict JSON object on a single line:
 """
 
 
+def _evidence_balance_stats(
+    role_evidence: dict[str, list[RerankedPassage]],
+) -> tuple[int, int, float, float]:
+    """Return (n_support, n_attack, mean_support_role_fit, mean_attack_role_fit).
+
+    Combines support+psupport and attack+pattack. Returns 0.0 for the mean
+    role_fit on an empty side.
+    """
+    sup = role_evidence.get("support", []) + role_evidence.get("psupport", [])
+    atk = role_evidence.get("attack", []) + role_evidence.get("pattack", [])
+    n_sup, n_atk = len(sup), len(atk)
+    mean_sup = sum(e.role_fit for e in sup) / n_sup if n_sup else 0.0
+    mean_atk = sum(e.role_fit for e in atk) / n_atk if n_atk else 0.0
+    return n_sup, n_atk, mean_sup, mean_atk
+
+
+def _structural_signal(
+    role_evidence: dict[str, list[RerankedPassage]],
+) -> tuple[float, float]:
+    """Compute the structural signal in [-1, +1] and an absolute confidence.
+
+    The signal is a weighted combination of:
+      - count balance:    (n_sup - n_atk) / (n_sup + n_atk)        weight 0.7
+      - strength balance: (mean_sup_role_fit - mean_atk_role_fit)  weight 0.3
+
+    Returns (signal, confidence) where confidence in [0, 1] is roughly
+    |signal| clipped — high when the structure speaks clearly, low when
+    evidence is mixed.
+    """
+    n_sup, n_atk, mean_sup, mean_atk = _evidence_balance_stats(role_evidence)
+    total = n_sup + n_atk
+    if total == 0:
+        return 0.0, 0.0
+    balance = (n_sup - n_atk) / total
+    strength_diff = mean_sup - mean_atk      # already in [-1, +1]
+    signal = 0.7 * balance + 0.3 * strength_diff
+    confidence = min(1.0, abs(signal) * 1.2)  # nudge up so |signal|=0.6 -> conf=0.72
+    return signal, confidence
+
+
+def _structural_prior_probs(
+    role_evidence: dict[str, list[RerankedPassage]],
+) -> dict[str, float]:
+    """Probability distribution over the 6 labels from structural evidence.
+
+    Uses a Gaussian kernel over each label's position on the signal axis:
+        unnormalised[label] = exp(-((signal - position[label]) / temperature)^2)
+
+    Temperature shrinks when confidence is high (peaked distribution),
+    widens when confidence is low (spread distribution). The resulting
+    distribution is normalised to sum to 1.
+
+    No-evidence case: returns a wide, middle-heavy distribution that
+    reflects genuine uncertainty (most mass on Half-true / Barely-true).
+    """
+    signal, confidence = _structural_signal(role_evidence)
+
+    if confidence == 0.0:
+        # No evidence at all — wide, intermediate-heavy distribution.
+        return {
+            "True":         0.05,
+            "Mostly-true":  0.20,
+            "Half-true":    0.25,
+            "Barely-true":  0.25,
+            "False":        0.20,
+            "Pants-fire":   0.05,
+        }
+
+    # Temperature: 0.30 (sharp) when confidence=1.0, 0.90 (broad) when confidence~=0.
+    temperature = max(0.30, 0.90 - 0.60 * confidence)
+
+    raw = {
+        label: math.exp(-((signal - pos) / temperature) ** 2)
+        for label, pos in LABEL_POSITION_ON_SIGNAL.items()
+    }
+    Z = sum(raw.values()) or 1.0
+    return {label: raw[label] / Z for label in raw}
+
+
 def _build_user_prompt(
     claim: str,
     role_evidence: dict[str, list[RerankedPassage]],
     max_per_role: int = 3,
     structural_prior: str | None = None,
+    structural_prior_probs: dict[str, float] | None = None,
 ) -> str:
     lines = [f"CLAIM: {claim}\n"]
-    if structural_prior:
+
+    if structural_prior_probs is not None:
+        # Probabilistic prior: show the full distribution as percentages,
+        # ordered along the truthfulness scale so the LLM sees the shape.
+        lines.append("STRUCTURAL_PRIOR (probability distribution from "
+                     "support/attack balance):")
+        for label in LABELS:
+            p = structural_prior_probs.get(label, 0.0)
+            bar = "█" * max(1, int(round(p * 20)))   # tiny visual cue
+            lines.append(f"  {label:12s} {p*100:5.1f}%  {bar}")
+        # Identify the mode and the second-mode so the LLM knows what to compare.
+        sorted_probs = sorted(structural_prior_probs.items(),
+                              key=lambda kv: -kv[1])
+        top, second = sorted_probs[0], sorted_probs[1]
+        gap = top[1] - second[1]
+        if gap > 0.25:
+            lines.append(f"(The distribution is peaked at {top[0]}. Use it "
+                         "as a strong starting point, but override if the "
+                         "evidence text qualifies the verdict.)\n")
+        else:
+            lines.append(f"(The distribution is spread across {top[0]} "
+                         f"and {second[0]}. Calibrate from the evidence "
+                         "text — do not over-commit to either label.)\n")
+    elif structural_prior:
         lines.append(f"STRUCTURAL_PRIOR: {structural_prior}")
-        lines.append("(This label follows from counting support vs attack "
-                     "relations. Use it as a strong starting point.)\n")
+        if structural_prior == "uncertain (mixed evidence)":
+            lines.append("(The support/attack balance is close. Do NOT assume "
+                         "the verdict is at an extreme — calibrate from the "
+                         "evidence text. Half-true / Mostly-true / Barely-true "
+                         "are all live options.)\n")
+        else:
+            lines.append("(This label follows from a clear support/attack "
+                         "imbalance. Use it as a strong starting point, but "
+                         "override if the evidence text qualifies the verdict.)\n")
     lines.append("EVIDENCE:")
     role_display = {
         "support": "support",
@@ -254,11 +403,22 @@ def _build_user_prompt(
         "pattack": "partial_attack",
         "flat": "topical",
     }
-    # Count for the prompt header so the LLM can see the balance at a glance
-    n_sup = len(role_evidence.get("support", [])) + len(role_evidence.get("psupport", []))
-    n_atk = len(role_evidence.get("attack", [])) + len(role_evidence.get("pattack", []))
-    lines.append(f"(structural balance: {n_sup} support passages, "
-                 f"{n_atk} attack passages)")
+    # Header line: counts AND average role-fit per side, so the LLM can tell
+    # whether the attacks are confident refutations or weak caveats.
+    n_sup, n_atk, mean_sup, mean_atk = _evidence_balance_stats(role_evidence)
+    lines.append(
+        f"(evidence balance: {n_sup} support passages, mean role-fit "
+        f"{mean_sup:.2f} · {n_atk} attack passages, mean role-fit "
+        f"{mean_atk:.2f})"
+    )
+    # Hint to the LLM: weak attacks should be read as caveats, not refutations.
+    if n_atk and mean_atk < 0.55 and n_sup:
+        lines.append("(NOTE: attack role-fit is low — these passages may be "
+                     "caveats/qualifications rather than refutations of the "
+                     "central claim.)")
+    if n_sup and mean_sup < 0.55 and n_atk:
+        lines.append("(NOTE: support role-fit is low — the supporting evidence "
+                     "is weak; do not over-commit to a truth-leaning verdict.)")
     for role, evs in role_evidence.items():
         for ev in evs[:max_per_role]:
             tag = role_display.get(role, role)
@@ -318,14 +478,43 @@ def _ollama_verdict(
     model: str,
     max_evidence_per_role: int,
     use_structural_prior: bool = True,
+    soft_prior_threshold: int = 3,
+    prior_mode: Literal["discrete", "probabilistic", "none"] = "discrete",
 ) -> Verdict:
+    """Run the Ollama-backed LLM verifier.
+
+    Prior modes:
+      - "discrete": pass a single label (or "uncertain (mixed evidence)")
+                    derived from the stub's count + role-fit heuristic.
+                    Fires only when |n_sup - n_atk| >= soft_prior_threshold.
+      - "probabilistic": pass a full 6-label probability distribution
+                    computed from the structural signal via Gaussian kernel.
+                    The temperature widens automatically when the structure
+                    is ambiguous.
+      - "none": no structural prior at all (ablation).
+
+    `soft_prior_threshold` only affects the discrete mode.
+    """
     import requests
     structural_prior = None
-    if use_structural_prior:
-        structural_prior = _stub_verdict(role_evidence).label
+    structural_prior_probs = None
+
+    if use_structural_prior and prior_mode != "none":
+        if prior_mode == "probabilistic":
+            structural_prior_probs = _structural_prior_probs(role_evidence)
+        else:  # discrete (default)
+            n_sup, n_atk, _, _ = _evidence_balance_stats(role_evidence)
+            imbalance = abs(n_sup - n_atk)
+            one_sided = (n_sup == 0) ^ (n_atk == 0)
+            if one_sided or imbalance >= soft_prior_threshold:
+                structural_prior = _stub_verdict(role_evidence).label
+            else:
+                structural_prior = "uncertain (mixed evidence)"
+
     prompt = _build_user_prompt(
         claim, role_evidence, max_evidence_per_role,
         structural_prior=structural_prior,
+        structural_prior_probs=structural_prior_probs,
     )
     payload = {
         "model": model,
@@ -382,12 +571,16 @@ class VerdictSynthesiser:
         ollama_model: str = "llama3.1:8b-instruct",
         max_evidence_per_role: int = 3,
         use_structural_prior: bool = True,
+        soft_prior_threshold: int = 3,
+        prior_mode: Literal["discrete", "probabilistic", "none"] = "discrete",
     ):
         self.backend = backend
         self.ollama_base_url = ollama_base_url
         self.ollama_model = ollama_model
         self.max_evidence_per_role = max_evidence_per_role
         self.use_structural_prior = use_structural_prior
+        self.soft_prior_threshold = soft_prior_threshold
+        self.prior_mode = prior_mode
 
     def verdict(
         self,
@@ -403,6 +596,8 @@ class VerdictSynthesiser:
                 model=self.ollama_model,
                 max_evidence_per_role=self.max_evidence_per_role,
                 use_structural_prior=self.use_structural_prior,
+                soft_prior_threshold=self.soft_prior_threshold,
+                prior_mode=self.prior_mode,
             )
         # Anthropic backend stub: requires user to add their key/handler
         raise NotImplementedError(f"backend {self.backend} not implemented")

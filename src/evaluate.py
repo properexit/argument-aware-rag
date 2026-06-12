@@ -26,6 +26,26 @@ INTERMEDIATE = ["Mostly-true", "Half-true", "Barely-true"]
 # Position on the 6-point truthfulness scale (True=0 ... Pants-fire=5)
 LABEL_INDEX = {lab: i for i, lab in enumerate(LABELS)}
 
+# ---------------------------------------------------------------------------
+# 3-way collapsed scheme (LIAR-literature standard).
+# Used for direct comparison against prior work that collapses LIAR's
+# 6-point scale into truth-leaning / mixed / false-leaning buckets.
+# ---------------------------------------------------------------------------
+THREEWAY_LABELS = ["true-leaning", "mixed", "false-leaning"]
+LABEL_TO_3WAY = {
+    "True":         "true-leaning",
+    "Mostly-true":  "true-leaning",
+    "Half-true":    "mixed",
+    "Barely-true":  "mixed",
+    "False":        "false-leaning",
+    "Pants-fire":   "false-leaning",
+}
+
+
+def to_3way(label: str) -> str:
+    """Collapse a 6-way label to its 3-way bucket. Pass-through if unknown."""
+    return LABEL_TO_3WAY.get(label, label)
+
 
 def _bucket_distance(a: str, b: str) -> int | None:
     """Distance between two labels on the 6-point scale, or None if either
@@ -98,6 +118,22 @@ def compute_metrics(
     distances = [d for d in distances if d is not None]
     mae = (sum(distances) / len(distances)) if distances else None
 
+    # ---- 3-way collapsed metrics (LIAR-standard comparison) ---------------
+    y_true_3w = [to_3way(t) for t in y_true]
+    y_pred_3w = [to_3way(p) for p in y_pred]
+    acc_3way = accuracy_score(y_true_3w, y_pred_3w)
+    macro_f1_3way = f1_score(
+        y_true_3w, y_pred_3w,
+        labels=THREEWAY_LABELS, average="macro", zero_division=0,
+    )
+    report_3w = classification_report(
+        y_true_3w, y_pred_3w,
+        labels=THREEWAY_LABELS, zero_division=0, output_dict=True,
+    )
+    cm_3way = confusion_matrix(
+        y_true_3w, y_pred_3w, labels=THREEWAY_LABELS,
+    ).tolist()
+
     return {
         "n": len(y_true),
         "accuracy": accuracy,
@@ -119,4 +155,20 @@ def compute_metrics(
         },
         "labels": label_set,
         "confusion_matrix": cm,
+        # 3-way collapsed view
+        "threeway": {
+            "accuracy": acc_3way,
+            "macro_f1": macro_f1_3way,
+            "per_bucket": {
+                lab: {
+                    "precision": report_3w[lab]["precision"],
+                    "recall": report_3w[lab]["recall"],
+                    "f1": report_3w[lab]["f1-score"],
+                    "support": report_3w[lab]["support"],
+                }
+                for lab in THREEWAY_LABELS if lab in report_3w
+            },
+            "labels": THREEWAY_LABELS,
+            "confusion_matrix": cm_3way,
+        },
     }

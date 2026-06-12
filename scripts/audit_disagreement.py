@@ -31,6 +31,13 @@ LABEL_ORDER = ["True", "Mostly-true", "Half-true",
                "Barely-true", "False", "Pants-fire"]
 LABEL_INDEX = {lab: i for i, lab in enumerate(LABEL_ORDER)}
 
+# 3-way collapse (kept in sync with src/evaluate.py)
+THREEWAY = {
+    "True": "true-leaning", "Mostly-true": "true-leaning",
+    "Half-true": "mixed", "Barely-true": "mixed",
+    "False": "false-leaning", "Pants-fire": "false-leaning",
+}
+
 
 def _label_distance(a: str, b: str) -> int | None:
     """Bucket distance between two labels on the 6-point scale, or None."""
@@ -124,6 +131,19 @@ def main() -> int:
     print(f"\n  arg-aware accuracy:  {arg_correct}/{n} = {arg_correct/n:.2%}")
     print(f"  flat-RAG  accuracy:  {flat_correct}/{n} = {flat_correct/n:.2%}")
     print(f"  net arg-aware lift:  {(arg_correct - flat_correct)/n:+.2%}")
+
+    # ---- 3-way collapsed view -------------------------------------------
+    arg_3w_correct = sum(
+        1 for r in rows if THREEWAY.get(r["arg_pred"]) == THREEWAY.get(r["gold"])
+    )
+    flat_3w_correct = sum(
+        1 for r in rows if THREEWAY.get(r["flat_pred"]) == THREEWAY.get(r["gold"])
+    )
+    print(f"\n  [3-way collapsed: true-leaning / mixed / false-leaning]")
+    print(f"  arg-aware 3-way acc: {arg_3w_correct}/{n} = {arg_3w_correct/n:.2%}")
+    print(f"  flat-RAG  3-way acc: {flat_3w_correct}/{n} = {flat_3w_correct/n:.2%}")
+    print(f"  net 3-way lift:      "
+          f"{(arg_3w_correct - flat_3w_correct)/n:+.2%}")
 
     # ---- off-by-one analysis (where the pipelines are "close")
     arg_off1 = sum(1 for r in rows if r["arg_dist"] == 1)

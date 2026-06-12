@@ -67,6 +67,17 @@ def main() -> int:
     ap.add_argument("--no-structural-prior", action="store_true",
                     help="Disable passing the stub-derived structural prior "
                          "to the LLM (default: pass it)")
+    ap.add_argument("--soft-prior-threshold", type=int, default=3,
+                    help="Inject a discrete structural prior only when "
+                         "|n_sup - n_atk| >= this threshold. Set to 0 for "
+                         "the old hard-prior behaviour, or to 99 to disable "
+                         "the discrete prior entirely (default: 3).")
+    ap.add_argument("--prior-mode", default="discrete",
+                    choices=["discrete", "probabilistic", "none"],
+                    help="How to express the structural prior to the LLM. "
+                         "'discrete' = single label (or 'uncertain'); "
+                         "'probabilistic' = 6-label probability distribution "
+                         "from role-fit scores; 'none' = no prior at all.")
     args = ap.parse_args()
 
     os.makedirs(args.out_dir, exist_ok=True)
@@ -90,6 +101,8 @@ def main() -> int:
         ollama_base_url=args.ollama_base_url,
         ollama_model=args.ollama_model,
         use_structural_prior=not args.no_structural_prior,
+        soft_prior_threshold=args.soft_prior_threshold,
+        prior_mode=args.prior_mode,
     )
 
     # Parser needs lookup over ALL rows (train+val+test) so it can dereference
@@ -153,12 +166,16 @@ def main() -> int:
     with open(metrics_path, "w") as f:
         json.dump(out_metrics, f, indent=2)
     def _fmt(m: dict, name: str) -> str:
+        tw = m["threeway"]
         return (
             f"[run_pipeline] {name:10s}"
-            f"  macro-F1 = {m['macro_f1']:.3f}"
+            f"  6-way macro-F1 = {m['macro_f1']:.3f}"
             f"  acc = {m['accuracy']:.3f}"
             f"  within-1 = {m['within_1_accuracy']:.3f}"
             f"  MAE = {m['mae_on_scale']:.2f}"
+            f"\n             "
+            f"  3-way:        macro-F1={tw['macro_f1']:.3f}"
+            f"  acc={tw['accuracy']:.3f}"
             f"\n             "
             f"  extreme:      F1={m['extreme_macro_f1']:.3f}"
             f"  within-1={m['extreme_within_1_accuracy']:.3f}"
@@ -171,9 +188,14 @@ def main() -> int:
     print(_fmt(arg_metrics, "arg-aware"))
     if not args.skip_flat:
         print(_fmt(flat_metrics, "flat-RAG"))
-        # Side-by-side delta
-        delta = arg_metrics["within_1_accuracy"] - flat_metrics["within_1_accuracy"]
-        print(f"\n[run_pipeline] arg-aware vs flat within-1 lift: {delta:+.3f}")
+        # Side-by-side deltas
+        d_w1 = arg_metrics["within_1_accuracy"] - flat_metrics["within_1_accuracy"]
+        d_3w = arg_metrics["threeway"]["macro_f1"] - flat_metrics["threeway"]["macro_f1"]
+        d_3a = arg_metrics["threeway"]["accuracy"] - flat_metrics["threeway"]["accuracy"]
+        print(f"\n[run_pipeline] arg-aware vs flat:"
+              f"  within-1 lift {d_w1:+.3f}"
+              f"  ·  3-way F1 lift {d_3w:+.3f}"
+              f"  ·  3-way acc lift {d_3a:+.3f}")
     print(f"[run_pipeline] wrote {pred_path}")
     print(f"[run_pipeline] wrote {metrics_path}")
 
