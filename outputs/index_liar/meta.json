@@ -1,0 +1,7 @@
+{
+  "dense_model_name": "sentence-transformers/all-MiniLM-L6-v2",
+  "use_bm25": true,
+  "use_dense": true,
+  "rrf_k": 60,
+  "n_passages": 38570
+}
