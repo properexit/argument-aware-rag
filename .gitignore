@@ -1,4 +1,6 @@
+# ============================================================
 # Python
+# ============================================================
 __pycache__/
 *.py[cod]
 *$py.class
@@ -8,36 +10,86 @@ __pycache__/
 venv/
 env/
 
-# OS
+# ============================================================
+# OS / editor cruft
+# ============================================================
 .DS_Store
 Thumbs.db
-
-# Editor
 .vscode/
 .idea/
 *.swp
 *~
-
-# Project data (LIARArg CSV + parsed splits — keep out of the repo)
-data/data.csv
-data/*.jsonl
-
-# Retrieval index (large: ~150 MB of dense embeddings)
-outputs/index/
-
-# Pipeline results (contain data snippets that should be regenerated
-# locally rather than checked in). Keep a placeholder file so the dir
-# exists in the repo.
-outputs/results/predictions*.jsonl
-outputs/results/audit.csv
-outputs/results/audit.md
-
-# Logs
-*.log
-
-# Jupyter
 .ipynb_checkpoints/
 *.ipynb_meta
 
-# Hugging Face / Torch caches if they end up in the project
+# ============================================================
+# Project data
+# (LIARArg CSV + every parsed split: stratified, LIAR-aligned, future)
+# The dataset has its own license — never ship it in the repo.
+# ============================================================
+data/data.csv
+data/**/*.jsonl
+data_*/**/*.jsonl
+data_liar/
+
+# ============================================================
+# Retrieval indices — large dense-embedding matrices (~80–150 MB)
+# Includes original outputs/index/ and any future outputs/index_*
+# ============================================================
+outputs/index/
+outputs/index_*/
+
+# ============================================================
+# Pipeline run outputs (predictions + per-claim audit files)
+# Contain snippets of the source data, so should never be checked
+# in. Regenerable locally from code + data + LLM.
+# Applies to outputs/results/ and any future outputs/results_*/
+# ============================================================
+outputs/results/predictions*.jsonl
+outputs/results/audit.csv
+outputs/results/audit.md
+outputs/results_*/predictions*.jsonl
+outputs/results_*/audit.csv
+outputs/results_*/audit.md
+
+# Snapshots created with cp -r outputs/results outputs/results_*_FINAL_*
+# (timestamped backups of clean runs). Whole snapshot dirs are
+# excluded — too big and contain the full predictions.jsonl files.
+outputs/results_*_FINAL_*/
+
+# ============================================================
+# Logs (overnight run output, can be huge)
+# ============================================================
+*.log
+outputs/logs/
+
+# ============================================================
+# Caches and downloaded model weights
+# ============================================================
 .cache/
+~/.cache/
+hf_cache/
+.huggingface/
+
+# ============================================================
+# Cloned reference repos (e.g. Wang 2025a code clone for inspection)
+# ============================================================
+wang2025a/
+reference_repos/
+
+# ============================================================
+# Local notes / drafts not meant for the repo
+# ============================================================
+notes_local.md
+scratch/
+
+# ============================================================
+# What IS tracked (kept for paper / reproducibility):
+#   - all of src/ and scripts/
+#   - config.yaml, requirements.txt, LICENSE, README.md, NEXT_STEPS.md
+#   - SUPERVISOR_MEETING_*.md
+#   - outputs/results/metrics.json
+#   - outputs/results/worked_example.md
+#   - outputs/results_*/metrics.json
+#   - outputs/results_*/worked_example.md
+# ============================================================
