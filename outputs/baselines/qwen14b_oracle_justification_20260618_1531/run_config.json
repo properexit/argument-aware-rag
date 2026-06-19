@@ -1,0 +1,16 @@
+{
+  "name": "qwen14b_oracle_justification",
+  "description": "Qwen-2.5-14B with the LIARArg gold fact-checker article as input. Oracle upper bound on single-LLM reasoning with perfect evidence.",
+  "backend": "ollama",
+  "model": "qwen2.5:14b-instruct",
+  "test_data_path": "/Users/uday/Documents/Claude/Projects/IRM/phase1_argrag/data_liar",
+  "n_claims_total": 952,
+  "n_claims_evaluated": 952,
+  "seed": 42,
+  "started_at": "2026-06-18T15:31:12",
+  "finished_at": "2026-06-18T20:05:32",
+  "elapsed_seconds": 16460.1,
+  "extra": {
+    "system_prompt_label": "oracle_justification_v1"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "name": "qwen14b_zeroshot",
+  "description": "Qwen-2.5-14B zero-shot, claim-only. No retrieval, no evidence, no argument structure. Tests the contribution of pretrained knowledge alone.",
+  "backend": "ollama",
+  "model": "qwen2.5:14b-instruct",
+  "test_data_path": "/Users/uday/Documents/Claude/Projects/IRM/phase1_argrag/data_liar",
+  "n_claims_total": 952,
+  "n_claims_evaluated": 952,
+  "seed": 42,
+  "started_at": "2026-06-18T13:50:58",
+  "finished_at": "2026-06-18T14:21:18",
+  "elapsed_seconds": 1820.0,
+  "extra": {
+    "system_prompt_label": "zeroshot_claim_only_v1"
+  }
+}
