@@ -49,10 +49,14 @@ student:
   learning_rate: 0.0003
   weight_decay: 0.01
   warmup_ratio: 0.1
-  num_epochs: 5
-  fp16: true                  # AMP — loads fp32 master weights, casts on forward
+  num_epochs: 3               # 3 is usually enough for T5 fine-tune; 5 was overkill
+  # CRITICAL: T5 family models (incl. Flan-T5) are known to overflow in fp16
+  # because RMSNorm's rsqrt op produces NaN activations. AMP's grad scaler
+  # then collapses the LR to 0 — silent training failure with hardware-busy
+  # symptoms. On Pascal (no bf16), the only safe dtype is fp32.
+  fp16: false
   gradient_checkpointing: true
-  optim: adafactor            # ~4 GB lower optimizer state vs Adam — fits 11 GB VRAM
+  optim: adafactor            # rank-1 state, ~4 GB lower than Adam, fits 11 GB VRAM
   seed: 42
   eval_every_steps: 0
 
