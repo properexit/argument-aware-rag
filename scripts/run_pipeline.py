@@ -125,32 +125,77 @@ def main() -> int:
     flat_results = []
     y_true = []
 
+    # ── Incremental save: skip already-done claims on resume and write
+    #    each prediction to disk immediately so a crash never loses progress.
+    pred_path = os.path.join(args.out_dir, "predictions.jsonl")
+    flat_path = os.path.join(args.out_dir, "predictions_flat.jsonl")
+    done_ids: set[int] = set()
+    if os.path.exists(pred_path):
+        with open(pred_path) as f:
+            for line in f:
+                try:
+                    done_ids.add(int(json.loads(line)["row_id"]))
+                except (json.JSONDecodeError, KeyError, ValueError):
+                    pass
+        if done_ids:
+            print(f"[run_pipeline] resuming: {len(done_ids)} claims already done "
+                  f"in {pred_path}")
+        # Load existing results so end-of-run metrics span the full union
+        with open(pred_path) as f:
+            for line in f:
+                try:
+                    r = json.loads(line)
+                    arg_results.append(r)
+                    arg_aware_preds.append(r["predicted_label"])
+                    y_true.append(r["gold_label"])
+                except (json.JSONDecodeError, KeyError):
+                    pass
+        if not args.skip_flat and os.path.exists(flat_path):
+            with open(flat_path) as f:
+                for line in f:
+                    try:
+                        r = json.loads(line)
+                        flat_results.append(r)
+                        flat_preds.append(r["predicted_label"])
+                    except (json.JSONDecodeError, KeyError):
+                        pass
+
+    # Open for APPEND, never overwrite existing partial work
+    pred_f = open(pred_path, "a")
+    flat_f = open(flat_path, "a") if not args.skip_flat else None
+
     t0 = time.time()
+    n_done_this_session = 0
     for i, row in enumerate(sample, 1):
+        if row.id in done_ids:
+            continue                                # skip on resume
         y_true.append(row.label)
         res = pipeline.run(row)
         arg_aware_preds.append(res.predicted_label)
-        arg_results.append(asdict(res))
+        d = asdict(res)
+        arg_results.append(d)
+        pred_f.write(json.dumps(d) + "\n")          # incremental flush
+        pred_f.flush()
+        os.fsync(pred_f.fileno())
 
         if not args.skip_flat:
             res_f = pipeline.run_flat(row)
             flat_preds.append(res_f.predicted_label)
-            flat_results.append(asdict(res_f))
+            df = asdict(res_f)
+            flat_results.append(df)
+            flat_f.write(json.dumps(df) + "\n")
+            flat_f.flush()
+            os.fsync(flat_f.fileno())
 
+        n_done_this_session += 1
         if i % 5 == 0 or i == len(sample):
             elapsed = time.time() - t0
-            print(f"  [{i}/{len(sample)}] elapsed {elapsed:.1f}s")
+            print(f"  [{i}/{len(sample)}] (+{n_done_this_session} new) "
+                  f"elapsed {elapsed:.1f}s")
 
-    # Write predictions
-    pred_path = os.path.join(args.out_dir, "predictions.jsonl")
-    with open(pred_path, "w") as f:
-        for r in arg_results:
-            f.write(json.dumps(r) + "\n")
-    if not args.skip_flat:
-        flat_path = os.path.join(args.out_dir, "predictions_flat.jsonl")
-        with open(flat_path, "w") as f:
-            for r in flat_results:
-                f.write(json.dumps(r) + "\n")
+    pred_f.close()
+    if flat_f is not None:
+        flat_f.close()
 
     # Metrics
     arg_metrics = compute_metrics(y_true, arg_aware_preds)

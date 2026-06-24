@@ -43,11 +43,16 @@ def _derive_label(run_dir: Path, cfg: dict) -> str:
             flavour = ""
         return f"{model}{flavour}"
 
-    # Fallbacks for main pipeline runs (which don't write a run_config.json)
+    # Fallbacks for main pipeline runs (which don't write a run_config.json).
+    # Distinguish by directory-name suffix so closed-corpus and open-corpus
+    # runs are visually separate in the table.
+    if "results_liar_wikipedia" in dir_name:
+        suffix = " (Wikipedia open corpus)"
+        return f"arg-aware (LIAR-aligned){suffix}"
     if "results_liar" in dir_name:
-        return "arg-aware (main, LIAR-aligned)"
+        return "arg-aware (LIAR-aligned, LIARArg closed corpus)"
     if "results" in dir_name and "liar" not in dir_name:
-        return "arg-aware (main, stratified)"
+        return "arg-aware (stratified, LIARArg closed corpus)"
     return dir_name
 
 
