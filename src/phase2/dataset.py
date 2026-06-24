@@ -257,10 +257,13 @@ _SYNTHETIC_EXAMPLES: list[TrainRecord] = [
 
 def synthetic_corpus(n: int = 50) -> list[TrainRecord]:
     """Replicate the two synthetic examples enough times to be useful for
-    smoke-testing. Caller can shuffle and re-split as needed."""
+    smoke-testing. Strips the split field so assemble_corpus's stratifier
+    can assign train/val/test fractions cleanly."""
     out: list[TrainRecord] = []
     for i in range(n):
-        out.append(dict(_SYNTHETIC_EXAMPLES[i % len(_SYNTHETIC_EXAMPLES)]))  # type: ignore
+        rec = dict(_SYNTHETIC_EXAMPLES[i % len(_SYNTHETIC_EXAMPLES)])  # type: ignore
+        rec.pop("split", None)
+        out.append(rec)
     return out
 
 

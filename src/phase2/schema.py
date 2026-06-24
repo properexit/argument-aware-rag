@@ -97,8 +97,13 @@ class StudentConfig:
     weight_decay: float = 0.01
     warmup_ratio: float = 0.1
     num_epochs: int = 5
-    fp16: bool = True
+    fp16: bool = True                 # AMP — gives ~30% speedup on Volta+
     gradient_checkpointing: bool = True
+    # Optimizer choice. "adafactor" is the canonical choice for T5
+    # (low memory footprint, Google's own choice for T5 fine-tuning) and
+    # is what lets Flan-T5-Large fit in 11 GB VRAM with Adam-class
+    # state savings of ~4 GB. Use "adamw_torch" for non-T5 models.
+    optim: Literal["adafactor", "adamw_torch", "adamw_torch_fused", "adamw_bnb_8bit"] = "adafactor"
     seed: int = 42
     eval_every_steps: int = 0          # 0 = epoch-level eval
 

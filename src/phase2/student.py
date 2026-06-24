@@ -210,12 +210,18 @@ class HFTrainer(StudentTrainerBase):
 
         tokenizer = AutoTokenizer.from_pretrained(self.cfg.base_model)
         ModelCls = S2SLM if is_seq2seq else CausalLM
-        model = ModelCls.from_pretrained(
-            self.cfg.base_model,
-            torch_dtype=torch.float16 if self.cfg.fp16 else torch.float32,
-        )
+        # IMPORTANT: load weights in fp32 even if we want fp16 training.
+        # AMP (enabled via TrainingArguments.fp16=True) maintains fp32
+        # master weights and casts to fp16 only for forward/backward.
+        # Loading directly in fp16 conflicts with AMP's gradient scaler
+        # ("Attempting to unscale FP16 gradients" — torch raises that
+        # because there are no fp32 grads to unscale).
+        model = ModelCls.from_pretrained(self.cfg.base_model)
         if self.cfg.gradient_checkpointing:
             model.gradient_checkpointing_enable()
+            # For T5: gradient checkpointing requires use_cache=False
+            if hasattr(model.config, "use_cache"):
+                model.config.use_cache = False
 
         # Build the train/val split from records
         train_recs = [r for r in records if r.get("split") == "train"]
@@ -254,6 +260,7 @@ class HFTrainer(StudentTrainerBase):
             weight_decay=self.cfg.weight_decay,
             warmup_ratio=self.cfg.warmup_ratio,
             fp16=self.cfg.fp16,
+            optim=self.cfg.optim,
             eval_strategy="epoch" if val_ds else "no",
             save_strategy="epoch",
             save_total_limit=2,

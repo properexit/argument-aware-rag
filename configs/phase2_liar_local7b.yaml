@@ -50,8 +50,9 @@ student:
   weight_decay: 0.01
   warmup_ratio: 0.1
   num_epochs: 5
-  fp16: true
+  fp16: true                  # AMP — loads fp32 master weights, casts on forward
   gradient_checkpointing: true
+  optim: adafactor            # ~4 GB lower optimizer state vs Adam — fits 11 GB VRAM
   seed: 42
   eval_every_steps: 0
 
