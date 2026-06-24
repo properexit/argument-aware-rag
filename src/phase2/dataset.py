@@ -55,14 +55,102 @@ def load_abstrct(path: str) -> Iterable[TrainRecord]:
     raise NotImplementedError("AbstRCT loader stub — implement when ready")
 
 
-def load_liararg(path: str) -> Iterable[TrainRecord]:
-    """Stub. Real impl reuses src/data_loader.py's parse_row() then
-    repacks the LIARArgRow into a TrainRecord. Cleanest way is to
-    import LIARArgRow + parse_gold() and convert."""
+def load_liararg(path: str) -> list[TrainRecord]:
+    """Load LIARArg into TrainRecords.
+
+    `path` can be either:
+      - a directory containing train.jsonl / val.jsonl / test.jsonl
+        (the pre-parsed LIARArg splits from Phase 1)
+      - a single .jsonl file (treated as the train split)
+
+    The pre-parsed JSONL schema is:
+        id, label, statement, speaker, full_text, summary,
+        claim_ids/texts, premise_ids/texts, citation_ids/texts,
+        support_relations, attack_relations, psupport_relations,
+        pattack_relations    (each: list[[src_id, tgt_id]])
+
+    The split label is preserved (we do NOT re-shuffle) so LIAR's
+    canonical test set stays intact — important for direct comparison
+    with Phase 1's gold-parser numbers.
+    """
     if not path:
         _stub_loader_warning("liararg")
         return []
-    raise NotImplementedError("LIARArg loader stub — implement when ready")
+    p = Path(path)
+    if p.is_dir():
+        sources = [
+            (p / "train.jsonl", "train"),
+            (p / "val.jsonl",   "val"),
+            (p / "test.jsonl",  "test"),
+        ]
+        sources = [(f, s) for f, s in sources if f.exists()]
+    elif p.is_file():
+        sources = [(p, "train")]
+    else:
+        raise FileNotFoundError(f"liararg path not found: {path}")
+
+    INSTRUCTION = ("Extract all argument components and relations from "
+                   "the text. Output strict JSON with claim_components, "
+                   "premise_components, citation_components, and relations.")
+
+    records: list[TrainRecord] = []
+    for file_path, split in sources:
+        with open(file_path) as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                row = json.loads(line)
+                records.append(_liararg_row_to_record(row, split, INSTRUCTION))
+    print(f"[dataset] liararg: loaded {len(records)} records from {path}")
+    return records
+
+
+def _liararg_row_to_record(
+    row: dict, split: str, instruction: str,
+) -> TrainRecord:
+    """Convert one parsed LIARArg JSONL row to a TrainRecord."""
+    def _zip_components(ids, texts, kind):
+        out = []
+        for cid, ctext in zip(ids or [], texts or []):
+            out.append({"id": int(cid), "type": kind, "text": str(ctext)})
+        return out
+
+    claims    = _zip_components(row.get("claim_ids"),    row.get("claim_texts"),    "claim")
+    premises  = _zip_components(row.get("premise_ids"),  row.get("premise_texts"),  "premise")
+    citations = _zip_components(row.get("citation_ids"), row.get("citation_texts"), "citation")
+
+    relations = []
+    for rel_type in ("support", "attack", "psupport", "pattack"):
+        key = f"{rel_type}_relations"
+        for pair in (row.get(key) or []):
+            if len(pair) >= 2:
+                relations.append({
+                    "src": int(pair[0]),
+                    "tgt": int(pair[1]),
+                    "type": rel_type,
+                })
+
+    # Input text: prefer full_text but truncate so we don't blow up the
+    # student's max_input_len. Most articles are <5K chars; longer ones
+    # we accept some loss on gold span coverage.
+    input_text = row.get("full_text") or row.get("summary") or row.get("statement", "")
+
+    return {
+        "instruction": instruction,
+        "input": str(input_text),
+        "reasoning": "",
+        "output": {
+            "claim_components": claims,
+            "premise_components": premises,
+            "citation_components": citations,
+            "relations": relations,
+        },
+        "source_dataset": "liararg",
+        "label_kind": "gold",
+        "split": split,
+        "domain": "politics",
+    }
 
 
 def load_aries_for_silver(
@@ -197,13 +285,22 @@ def assemble_corpus(cfg: DatasetConfig) -> list[TrainRecord]:
         print("[dataset] no real sources configured — using synthetic corpus.")
         records = synthetic_corpus()
 
-    # Stratified-by-source train/val/test split
+    # Stratified-by-source train/val/test split.
+    # IMPORTANT: records that already have a canonical split (e.g. LIARArg's
+    # train/val/test from the pre-parsed JSONLs, which align with LIAR-test)
+    # are preserved as-is. We only assign splits for sources that arrived
+    # without one (synthetic, or any source whose loader didn't set it).
     rng = random.Random(cfg.seed)
     by_source: dict[str, list[TrainRecord]] = {}
     for r in records:
         by_source.setdefault(r["source_dataset"], []).append(r)
     out: list[TrainRecord] = []
     for source, rs in by_source.items():
+        if all(r.get("split") in ("train", "val", "test") for r in rs):
+            # All rows already carry a canonical split — keep it.
+            out.extend(rs)
+            continue
+        # Otherwise re-shuffle and assign splits per cfg fractions.
         rng.shuffle(rs)
         n = len(rs)
         n_test = int(n * cfg.test_frac)

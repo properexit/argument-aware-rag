@@ -1,0 +1,26 @@
+# Same data path as phase2_liar_local7b, but with dummy student — for
+# CPU-only validation of the data → eval pipeline on real LIARArg.
+run_name: phase2_liar_dummy
+
+dataset:
+  aaec_path: ""
+  abstrct_path: ""
+  liararg_path: data
+  aries_clean_path: ""
+  silver_sources: []
+  samples_per_silver_source: 0
+  val_frac: 0.10
+  test_frac: 0.10
+  seed: 42
+  output_dir: phase2_data_liar_dummy
+
+teacher:
+  backend: dummy
+  model: ""
+
+student:
+  backend: dummy
+  base_model: dummy
+  num_epochs: 1
+
+student_output_dir: phase2_student_liar_dummy
