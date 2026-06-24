@@ -49,6 +49,10 @@ def main():
     print(f"[annotate] {len(rows)} rows × teacher={cfg.teacher.backend} → {silver_path}")
     teacher = build_teacher(cfg.teacher)
     teacher.annotate_all(rows, silver_path, resume=True)
+    # Release GPU memory if the teacher held any (LocalHFTeacher) so
+    # train_student.py can take the GPU cleanly afterwards.
+    if hasattr(teacher, "release"):
+        teacher.release()
     print(f"[annotate] done. silver written to {silver_path}")
 
 

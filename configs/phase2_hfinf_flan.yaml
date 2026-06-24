@@ -1,0 +1,66 @@
+# Real run: HuggingFace Inference Providers teacher + Flan-T5-Large student.
+# Llama-3.3-70B via HF Serverless Inference (free tier, generous daily budget).
+#
+# Before running on the GPU server:
+#   export HF_TOKEN=hf_...              # https://huggingface.co/settings/tokens
+#   pip install huggingface_hub
+#
+# Llama 3.3 70B is gated — accept the license at
+#   https://huggingface.co/meta-llama/Llama-3.3-70B-Instruct
+# once with the same HF account. Then the token unlocks inference.
+#
+# If HF rate-limits you mid-run, swap to phase2_local7b_flan.yaml —
+# annotate_silver.py is resumable, so it picks up where this left off.
+run_name: phase2_hfinf_flan
+
+dataset:
+  aaec_path: ""
+  abstrct_path: ""
+  liararg_path: data/data.csv
+  aries_clean_path: data/aries_clean.csv
+  silver_sources:
+    - US2016
+    - US2016R1
+    - CDCP
+    - Microtext
+    - Cuties
+    - ACSP
+  samples_per_silver_source: 200
+  val_frac: 0.10
+  test_frac: 0.10
+  seed: 42
+  output_dir: phase2_data
+
+teacher:
+  backend: hf_inference
+  model: meta-llama/Llama-3.3-70B-Instruct
+  # Alternatives if Llama is gated / over-quota for the day:
+  #   Qwen/Qwen2.5-72B-Instruct
+  #   mistralai/Mistral-Nemo-Instruct-2407 (12B, very generous quota)
+  max_input_chars: 4000
+  max_output_tokens: 800
+  rpm_cap: 25
+  max_requests_per_day: 1000
+  seed: 42
+  include_cot: true
+  retries_per_call: 3
+  quantization: none
+  device: auto
+
+student:
+  backend: hf
+  base_model: google/flan-t5-large
+  max_input_len: 512
+  max_target_len: 512
+  batch_size: 4
+  grad_accum: 8
+  learning_rate: 0.0003
+  weight_decay: 0.01
+  warmup_ratio: 0.1
+  num_epochs: 5
+  fp16: true
+  gradient_checkpointing: true
+  seed: 42
+  eval_every_steps: 0
+
+student_output_dir: phase2_student_flan

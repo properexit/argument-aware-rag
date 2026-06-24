@@ -67,7 +67,10 @@ class TrainRecord(TypedDict, total=False):
 
 @dataclass
 class TeacherConfig:
-    backend: Literal["dummy", "groq", "openai", "anthropic"] = "dummy"
+    backend: Literal[
+        "dummy", "groq", "openai", "anthropic",
+        "hf_inference", "local_hf",
+    ] = "dummy"
     model: str = ""                   # e.g. "llama-3.3-70b-versatile"
     api_base_url: str = ""            # optional override
     max_input_chars: int = 4000
@@ -77,6 +80,9 @@ class TeacherConfig:
     seed: int = 42
     include_cot: bool = True          # request <think>...</think> from teacher
     retries_per_call: int = 3
+    # Only used by local_hf backend:
+    quantization: Literal["none", "4bit", "8bit"] = "none"
+    device: str = "auto"              # "auto" / "cuda" / "cuda:0" / "cpu"
 
 
 @dataclass

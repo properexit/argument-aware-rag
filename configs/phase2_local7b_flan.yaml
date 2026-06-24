@@ -1,0 +1,75 @@
+# Fully offline: local Qwen2.5-7B teacher + Flan-T5-Large student.
+# No API key, no rate limit, no internet during the run. The model
+# downloads once (~5 GB at 4-bit) on first use, then runs locally on
+# your GPU forever after — unlimited annotation budget.
+#
+# Why 7B at 4-bit instead of 3B at fp16:
+#   - Silver-label quality is much closer to a 70B teacher (~85% vs ~70%)
+#   - Still fits in 11 GB with plenty of headroom for activations
+#   - Pre-requisite: pip install bitsandbytes>=0.42 (Pascal-compatible)
+#
+# What fits in 11 GB on a GTX 1080 Ti:
+#   - Qwen/Qwen2.5-3B-Instruct (fp16)     ~6 GB   weaker but no bnb needed
+#   - Qwen/Qwen2.5-7B-Instruct (4-bit)    ~4.5 GB stronger, needs bnb     ← default
+#   - meta-llama/Llama-3.1-8B-Instruct    ~5 GB   strong alternative
+#   - Qwen/Qwen2.5-14B-Instruct (4-bit)   ~8 GB   strongest, tighter
+#
+# If bitsandbytes 4-bit fails on Pascal (older bnb versions don't
+# support compute 6.1), the cleaner backend is llama-cpp-python with
+# a GGUF model. Drop `quantization: 4bit` and set `model:` to a 3B
+# fp16 model — or implement LlamaCppTeacher (sketch in teacher.py).
+#
+# IMPORTANT: the teacher and student both want the GPU. annotate_silver
+# fully releases the model before train_student starts (LocalHFTeacher
+# has a release() method), so running them sequentially is fine — but
+# don't try to run them in parallel from different cells.
+run_name: phase2_local7b_flan
+
+dataset:
+  aaec_path: ""
+  abstrct_path: ""
+  liararg_path: data/data.csv
+  aries_clean_path: data/aries_clean.csv
+  silver_sources:
+    - US2016
+    - US2016R1
+    - CDCP
+    - Microtext
+    - Cuties
+    - ACSP
+  samples_per_silver_source: 200
+  val_frac: 0.10
+  test_frac: 0.10
+  seed: 42
+  output_dir: phase2_data
+
+teacher:
+  backend: local_hf
+  model: Qwen/Qwen2.5-7B-Instruct
+  max_input_chars: 4000
+  max_output_tokens: 800
+  rpm_cap: 1000                 # not used for local — keep high
+  max_requests_per_day: 100000  # effectively unlimited
+  seed: 42
+  include_cot: true
+  retries_per_call: 1           # local model rarely needs retries
+  quantization: 4bit            # ← Pascal (1080 Ti) needs bnb ≥ 0.42
+  device: auto                  # auto-selects cuda
+
+student:
+  backend: hf
+  base_model: google/flan-t5-large
+  max_input_len: 512
+  max_target_len: 512
+  batch_size: 4
+  grad_accum: 8
+  learning_rate: 0.0003
+  weight_decay: 0.01
+  warmup_ratio: 0.1
+  num_epochs: 5
+  fp16: true
+  gradient_checkpointing: true
+  seed: 42
+  eval_every_steps: 0
+
+student_output_dir: phase2_student_flan

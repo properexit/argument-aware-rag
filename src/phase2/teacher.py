@@ -289,6 +289,202 @@ class GroqTeacher(AnnotatorBase):
 
 
 # ────────────────────────────────────────────────────────────────────────────
+# HFInferenceTeacher — HuggingFace Inference Providers (free tier)
+# ────────────────────────────────────────────────────────────────────────────
+
+class HFInferenceTeacher(AnnotatorBase):
+    """Calls a model hosted via HuggingFace's Inference Providers
+    (the free tier of huggingface_hub.InferenceClient, which routes to
+    backends like Cerebras / SambaNova / Together).
+
+    Requires env var HF_TOKEN. Llama-3.3-70B-Instruct and
+    Qwen/Qwen2.5-72B-Instruct are both available on the free tier
+    with a daily request budget (set max_requests_per_day to your cap).
+
+    Uses the same rate-limit-aware patterns as GroqTeacher.
+    """
+    name = "hf_inference"
+
+    def __init__(self, cfg: TeacherConfig):
+        super().__init__(cfg)
+        token = os.environ.get("HF_TOKEN") or os.environ.get("HUGGINGFACE_TOKEN")
+        if not token:
+            raise RuntimeError(
+                "HF_TOKEN env var not set. Get a free token from "
+                "https://huggingface.co/settings/tokens (Read access "
+                "is enough for the Inference API).")
+        try:
+            from huggingface_hub import InferenceClient
+        except ImportError as e:
+            raise RuntimeError("pip install huggingface_hub") from e
+        model = cfg.model or "meta-llama/Llama-3.3-70B-Instruct"
+        self._client = InferenceClient(model=model, token=token)
+        self._model = model
+        self._sleep_between = 60.0 / max(cfg.rpm_cap, 1)
+        self._last_call = 0.0
+        self._n_today = 0
+
+    def annotate(self, text: str, source: str) -> tuple[ArgStructureDict, str]:
+        if self._n_today >= self.cfg.max_requests_per_day:
+            return _empty_structure(), "[teacher: daily cap reached]"
+
+        elapsed = time.time() - self._last_call
+        if elapsed < self._sleep_between:
+            time.sleep(self._sleep_between - elapsed)
+
+        prompt = _build_user_prompt(text, source, self.cfg.max_input_chars)
+        for attempt in range(self.cfg.retries_per_call + 1):
+            try:
+                resp = self._client.chat_completion(
+                    messages=[
+                        {"role": "system", "content": SYSTEM_PROMPT},
+                        {"role": "user",   "content": prompt},
+                    ],
+                    temperature=0.0,
+                    seed=self.cfg.seed,
+                    max_tokens=self.cfg.max_output_tokens,
+                )
+                self._last_call = time.time()
+                self._n_today += 1
+                raw = resp.choices[0].message.content or ""
+                return _extract_json(raw), _extract_cot(raw)
+            except Exception as e:
+                msg = str(e).lower()
+                if "rate" in msg or "429" in msg or "quota" in msg:
+                    if attempt == self.cfg.retries_per_call:
+                        return _empty_structure(), f"[teacher rate-limit: {e}]"
+                    backoff = 2 ** attempt * 5
+                    print(f"  [teacher:hf_inference {e.__class__.__name__} — "
+                          f"sleeping {backoff}s]")
+                    time.sleep(backoff)
+                elif attempt == self.cfg.retries_per_call:
+                    return _empty_structure(), f"[teacher error: {e}]"
+                else:
+                    time.sleep(2)
+        return _empty_structure(), "[teacher: max retries]"
+
+
+# ────────────────────────────────────────────────────────────────────────────
+# LocalHFTeacher — runs a small/medium model on the local GPU
+# ────────────────────────────────────────────────────────────────────────────
+
+class LocalHFTeacher(AnnotatorBase):
+    """Runs a HuggingFace causal LM locally — no API, no rate limit.
+
+    For an 11 GB GPU (GTX 1080 Ti), recommended defaults:
+      - Qwen/Qwen2.5-3B-Instruct in fp16 (no quantization needed; ~6 GB)
+      - meta-llama/Llama-3.2-3B-Instruct in fp16 (~6 GB)
+      - Qwen/Qwen2.5-7B-Instruct + 4-bit quantization (~4.5 GB,
+        requires bitsandbytes; Pascal support via bnb≥0.42)
+
+    Trade-off: a 3-7B teacher is weaker than a 70B teacher, so silver
+    label quality is lower. Defensible if (a) you can't get API
+    budget, or (b) you spot-check silver against held-out gold.
+
+    Important: this loads a model into GPU memory. Free it (call
+    `release()`) before training the student so they don't compete.
+    """
+    name = "local_hf"
+
+    def __init__(self, cfg: TeacherConfig):
+        super().__init__(cfg)
+        try:
+            import torch
+            from transformers import AutoTokenizer, AutoModelForCausalLM
+        except ImportError as e:
+            raise RuntimeError(
+                "pip install torch transformers (already in our deps)") from e
+
+        model_name = cfg.model or "Qwen/Qwen2.5-3B-Instruct"
+        print(f"[teacher:local_hf] loading {model_name} "
+              f"(quant={cfg.quantization})")
+
+        load_kwargs: dict = {"torch_dtype": torch.float16}
+        if cfg.quantization in ("4bit", "8bit"):
+            try:
+                from transformers import BitsAndBytesConfig
+                load_kwargs["quantization_config"] = BitsAndBytesConfig(
+                    load_in_4bit=(cfg.quantization == "4bit"),
+                    load_in_8bit=(cfg.quantization == "8bit"),
+                    bnb_4bit_compute_dtype=torch.float16,
+                )
+            except ImportError as e:
+                raise RuntimeError(
+                    "pip install bitsandbytes for quantization") from e
+
+        self._tokenizer = AutoTokenizer.from_pretrained(model_name)
+        # Many causal LMs lack a pad token by default — use EOS.
+        if self._tokenizer.pad_token is None:
+            self._tokenizer.pad_token = self._tokenizer.eos_token
+
+        self._model = AutoModelForCausalLM.from_pretrained(
+            model_name, **load_kwargs,
+        )
+        # device_map="auto" would also work, but we pin to a single device
+        # so memory is predictable on a single-GPU machine.
+        device = cfg.device
+        if device == "auto":
+            device = "cuda" if torch.cuda.is_available() else "cpu"
+        if cfg.quantization == "none":
+            self._model.to(device)
+        self._device = device
+        self._model.eval()
+        self._torch = torch
+        self._n_today = 0
+        print(f"[teacher:local_hf] ready on {device}")
+
+    def annotate(self, text: str, source: str) -> tuple[ArgStructureDict, str]:
+        if self._n_today >= self.cfg.max_requests_per_day:
+            return _empty_structure(), "[teacher: daily cap reached]"
+
+        prompt_user = _build_user_prompt(text, source, self.cfg.max_input_chars)
+        # Use the tokenizer's chat template (works for Qwen, Llama-3.x, Mistral)
+        messages = [
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user",   "content": prompt_user},
+        ]
+        try:
+            input_ids = self._tokenizer.apply_chat_template(
+                messages,
+                add_generation_prompt=True,
+                return_tensors="pt",
+            ).to(self._device)
+        except Exception:
+            # Fallback for tokenizers without chat templates
+            input_ids = self._tokenizer(
+                SYSTEM_PROMPT + "\n\n" + prompt_user,
+                return_tensors="pt",
+                truncation=True,
+                max_length=2048,
+            )["input_ids"].to(self._device)
+
+        try:
+            with self._torch.no_grad():
+                out = self._model.generate(
+                    input_ids,
+                    max_new_tokens=self.cfg.max_output_tokens,
+                    do_sample=False,
+                    temperature=1.0,
+                    pad_token_id=self._tokenizer.pad_token_id,
+                )
+            new_tokens = out[0][input_ids.shape[-1]:]
+            raw = self._tokenizer.decode(new_tokens, skip_special_tokens=True)
+            self._n_today += 1
+            return _extract_json(raw), _extract_cot(raw)
+        except Exception as e:
+            return _empty_structure(), f"[teacher error: {e}]"
+
+    def release(self) -> None:
+        """Free GPU memory before student training takes the GPU."""
+        try:
+            del self._model
+            self._torch.cuda.empty_cache()
+            print("[teacher:local_hf] released GPU memory")
+        except Exception:
+            pass
+
+
+# ────────────────────────────────────────────────────────────────────────────
 # Factory
 # ────────────────────────────────────────────────────────────────────────────
 
@@ -297,6 +493,10 @@ def build_teacher(cfg: TeacherConfig) -> AnnotatorBase:
         return DummyTeacher(cfg)
     if cfg.backend == "groq":
         return GroqTeacher(cfg)
+    if cfg.backend == "hf_inference":
+        return HFInferenceTeacher(cfg)
+    if cfg.backend == "local_hf":
+        return LocalHFTeacher(cfg)
     # Hooks for future backends — kept as explicit raises so config typos
     # don't silently fall through to dummy.
     if cfg.backend == "openai":

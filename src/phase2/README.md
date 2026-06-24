@@ -20,7 +20,10 @@ src/phase2/
 
 configs/
 ├── phase2_dummy.yaml         all dummies — CPU, ~30 seconds
-└── phase2_groq_flan.yaml     Groq teacher + Flan-T5-Large student
+├── phase2_groq_flan.yaml     Groq Llama-70B teacher (~100K tok/day cap)
+├── phase2_hfinf_flan.yaml    HF Inference Llama-70B (free, ~1000 req/day)
+└── phase2_local7b_flan.yaml  fully offline Qwen-7B (4-bit) on local GPU
+                              (unlimited, no API key, ~5 GB VRAM)
 
 scripts/phase2/
 ├── prepare_datasets.py       assemble gold corpus
@@ -34,9 +37,12 @@ scripts/phase2/
 Two interfaces are the swap seams:
 
 - **`AnnotatorBase`** (`teacher.py`) — `annotate(text, source)` returns
-  `(ArgStructureDict, reasoning)`. Add a new teacher backend (OpenAI,
-  Anthropic, locally-hosted Llama) by subclassing and registering in
-  `build_teacher`.
+  `(ArgStructureDict, reasoning)`. Ships with four backends:
+  `DummyTeacher`, `GroqTeacher` (Llama-70B via Groq, 100K tok/day cap),
+  `HFInferenceTeacher` (Llama-70B / Qwen-72B via HuggingFace's free
+  Inference Providers, ~1000 req/day), and `LocalHFTeacher` (Qwen-3B
+  or Llama-3B running locally on the same GPU, no API needed).
+  Add new ones (OpenAI, Anthropic, vLLM-hosted) by subclassing.
 
 - **`StudentTrainerBase`** (`student.py`) — `train(records, out_dir)`
   + `load(path)` + `predict(text)`. Add a new student backend (PEFT
@@ -69,9 +75,17 @@ files import cleanly and the metrics pipeline produces a JSON.
    git clone https://github.com/properexit/argument-aware-rag.git
    cd argument-aware-rag
    python3 -m venv .venv && source .venv/bin/activate
+   # PyTorch with CUDA 12.1 wheels (works on driver ≥ 525)
+   pip install torch==2.4.1 torchvision==0.19.1 \
+       --index-url https://download.pytorch.org/whl/cu121
    pip install -r requirements.txt
    pip install transformers datasets accelerate peft sentencepiece
-   export GROQ_API_KEY=sk-...
+   # Only needed for local_hf teacher (4-bit / 8-bit):
+   pip install bitsandbytes>=0.42
+   # Set whichever teacher key you'll actually use:
+   export HF_TOKEN=hf_...        # for hf_inference backend
+   export GROQ_API_KEY=gsk_...   # for groq backend
+   # (no env var needed for local_hf)
    ```
 
 2. **Edit `configs/phase2_groq_flan.yaml`** to point `liararg_path` and
