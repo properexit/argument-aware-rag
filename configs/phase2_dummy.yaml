@@ -1,0 +1,47 @@
+# End-to-end pipeline test with all dummies.
+# Runs on a laptop in seconds. Use this to verify the plumbing before
+# spending GPU minutes on a real run.
+run_name: phase2_dummy
+
+dataset:
+  # Leave source paths blank — assemble_corpus() will fall back to the
+  # synthetic two-example corpus baked into src/phase2/dataset.py.
+  aaec_path: ""
+  abstrct_path: ""
+  liararg_path: ""
+  aries_clean_path: ""
+  silver_sources: []
+  samples_per_silver_source: 0
+  val_frac: 0.10
+  test_frac: 0.10
+  seed: 42
+  output_dir: phase2_data_dummy
+
+teacher:
+  backend: dummy
+  model: ""
+  max_input_chars: 4000
+  max_output_tokens: 800
+  rpm_cap: 25
+  max_requests_per_day: 950
+  seed: 42
+  include_cot: true
+  retries_per_call: 3
+
+student:
+  backend: dummy
+  base_model: dummy
+  max_input_len: 512
+  max_target_len: 512
+  batch_size: 4
+  grad_accum: 8
+  learning_rate: 0.0003
+  weight_decay: 0.01
+  warmup_ratio: 0.1
+  num_epochs: 1
+  fp16: false
+  gradient_checkpointing: false
+  seed: 42
+  eval_every_steps: 0
+
+student_output_dir: phase2_student_dummy

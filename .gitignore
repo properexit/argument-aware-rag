@@ -78,6 +78,15 @@ wang2025a/
 reference_repos/
 
 # ============================================================
+# Phase 2 generated artifacts (regenerable from code + data)
+# Dataset assembly output, silver annotations, trained models.
+# All written under user-configurable output_dir / student_output_dir,
+# which we conventionally prefix with `phase2_`.
+# ============================================================
+phase2_data*/
+phase2_student*/
+
+# ============================================================
 # Local notes / drafts not meant for the repo
 # ============================================================
 notes_local.md

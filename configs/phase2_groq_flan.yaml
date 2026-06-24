@@ -1,0 +1,65 @@
+# Real run: Groq Llama-3.3-70B teacher + Flan-T5-Large student.
+# Sized for a single GTX 1080 Ti (11 GB VRAM): full fine-tune,
+# fp16, batch 4 with grad-accum 8 (effective batch 32).
+#
+# Before running:
+#   - export GROQ_API_KEY=... (free tier from groq.com)
+#   - clone/pull this repo on the GPU machine
+#   - venv install: pip install -r requirements.txt
+#                   pip install transformers datasets accelerate peft sentencepiece
+#
+# Expected runtime on a 1080 Ti for ~5k examples × 5 epochs:
+#   - silver annotation (rate-limited): ~30 min for 1200 rows
+#   - training: ~30-60 min
+#   - eval on held-out: ~5 min
+run_name: phase2_groq_flan
+
+dataset:
+  # Point these at real datasets when you have them on the GPU server.
+  # Leave blank to fall back to the dummy synthetic corpus (useful for
+  # checking just the env setup with a real model).
+  aaec_path: ""
+  abstrct_path: ""
+  liararg_path: data/data.csv      # adjust to your path on the server
+  aries_clean_path: data/aries_clean.csv
+  silver_sources:
+    - US2016
+    - US2016R1
+    - CDCP
+    - Microtext
+    - Cuties
+    - ACSP
+  samples_per_silver_source: 200
+  val_frac: 0.10
+  test_frac: 0.10
+  seed: 42
+  output_dir: phase2_data
+
+teacher:
+  backend: groq
+  model: llama-3.3-70b-versatile
+  max_input_chars: 4000
+  max_output_tokens: 800
+  rpm_cap: 25
+  max_requests_per_day: 950
+  seed: 42
+  include_cot: true
+  retries_per_call: 3
+
+student:
+  backend: hf
+  base_model: google/flan-t5-large
+  max_input_len: 512
+  max_target_len: 512
+  batch_size: 4
+  grad_accum: 8
+  learning_rate: 0.0003
+  weight_decay: 0.01
+  warmup_ratio: 0.1
+  num_epochs: 5
+  fp16: true                    # GTX 1080 Ti supports fp16 storage
+  gradient_checkpointing: true  # essential for 11 GB VRAM
+  seed: 42
+  eval_every_steps: 0
+
+student_output_dir: phase2_student_flan
