@@ -20,8 +20,14 @@ dataset:
 teacher:
   backend: local_hf
   model: Qwen/Qwen2.5-3B-Instruct
-  max_input_chars: 6000
-  max_output_tokens: 1024
+  # On Pascal (no tensor cores), generation cost scales hard with context+output
+  # length. Empirically: 6000/1024 → ~2 min/row (~14h for 425).
+  # 2000/384  → ~15 sec/row (~1h45m for 425). Quality impact: minor —
+  # Politifact articles front-load the statement and first 1-2 premises in
+  # the opening paragraphs, and ArgStructureDict JSON usually fits in
+  # 200-300 tokens.
+  max_input_chars: 2000
+  max_output_tokens: 384
   rpm_cap: 1000                  # not used for local
   max_requests_per_day: 100000   # effectively unlimited
   seed: 42
