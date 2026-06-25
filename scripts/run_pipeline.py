@@ -78,6 +78,11 @@ def main() -> int:
                          "'discrete' = single label (or 'uncertain'); "
                          "'probabilistic' = 6-label probability distribution "
                          "from role-fit scores; 'none' = no prior at all.")
+    ap.add_argument("--frozen-parser-predictions", default="",
+                    help="If set, use FrozenArgParserLLM with predictions "
+                         "from this JSONL (one row: {row_id, prediction, "
+                         "reasoning}) instead of GoldArgParser. Used for "
+                         "Phase 2-α (learned-parser integration test).")
     args = ap.parse_args()
 
     os.makedirs(args.out_dir, exist_ok=True)
@@ -108,7 +113,18 @@ def main() -> int:
     # Parser needs lookup over ALL rows (train+val+test) so it can dereference
     # any row id.
     all_rows = {r.id: r for rs in split.values() for r in rs}
-    parser = GoldArgParser(all_rows)
+    if args.frozen_parser_predictions:
+        # Phase 2-α: swap gold parser for pre-computed LLM-as-parser outputs.
+        # This lets us measure how much of Phase 1's gold-parser advantage
+        # survives when an actual parser (not an oracle CSV lookup) drives
+        # the role-targeted retrieval + re-ranking.
+        from src.phase2.arg_parser_llm import FrozenArgParserLLM
+        parser = FrozenArgParserLLM(all_rows, args.frozen_parser_predictions)
+        print(f"[run_pipeline] using FrozenArgParserLLM (Phase 2-α) "
+              f"from {args.frozen_parser_predictions}")
+    else:
+        parser = GoldArgParser(all_rows)
+        print(f"[run_pipeline] using GoldArgParser (Phase 1 oracle)")
 
     pipeline = ArgAwareRAGPipeline(
         parser=parser,

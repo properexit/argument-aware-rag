@@ -1,0 +1,36 @@
+# Phase 2-α: parse test split with local Qwen2.5-7B (4-bit) as the parser.
+# Fully offline, free, runs on the GTX 1080 Ti. ~30-60 min for 425 rows.
+#
+# After this run produces phase2_data_liar/parser_preds_qwen7b.jsonl,
+# scp it to the Mac and run:
+#   python scripts/run_pipeline.py --frozen-parser-predictions <local-path>
+# to get Phase-1 macro-F1 with the learned parser.
+run_name: phase2_parse_test_qwen7b
+
+dataset:
+  liararg_path: data
+  aaec_path: ""
+  abstrct_path: ""
+  aries_clean_path: ""
+  silver_sources: []
+  samples_per_silver_source: 0
+  seed: 42
+  output_dir: phase2_data_liar
+
+teacher:
+  backend: local_hf
+  model: Qwen/Qwen2.5-7B-Instruct
+  max_input_chars: 6000          # Politifact articles are long; give the parser more context
+  max_output_tokens: 1024        # bigger than silver (we need full ArgStructure JSON)
+  rpm_cap: 1000                  # not used for local
+  max_requests_per_day: 100000   # effectively unlimited
+  seed: 42
+  include_cot: false             # CoT just bloats output for this run
+  retries_per_call: 1
+  quantization: 4bit
+  device: auto
+
+# student section unused for this run — kept for schema validation
+student:
+  backend: dummy
+  base_model: dummy

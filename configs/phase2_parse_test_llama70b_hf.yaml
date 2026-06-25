@@ -1,0 +1,34 @@
+# Phase 2-α: parse test split with Llama-3.3-70B via HuggingFace Inference.
+# Higher-quality parser than local Qwen-7B; uses HF free tier (~1000 req/day).
+# Requires: export HF_TOKEN=hf_... and accept the Llama license once
+# at https://huggingface.co/meta-llama/Llama-3.3-70B-Instruct.
+#
+# 425 rows × ~5s = ~36 min wallclock. Fits in daily quota.
+run_name: phase2_parse_test_llama70b_hf
+
+dataset:
+  liararg_path: data
+  aaec_path: ""
+  abstrct_path: ""
+  aries_clean_path: ""
+  silver_sources: []
+  samples_per_silver_source: 0
+  seed: 42
+  output_dir: phase2_data_liar
+
+teacher:
+  backend: hf_inference
+  model: meta-llama/Llama-3.3-70B-Instruct
+  max_input_chars: 6000
+  max_output_tokens: 1024
+  rpm_cap: 25
+  max_requests_per_day: 1000
+  seed: 42
+  include_cot: false
+  retries_per_call: 3
+  quantization: none
+  device: auto
+
+student:
+  backend: dummy
+  base_model: dummy

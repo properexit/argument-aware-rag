@@ -140,3 +140,105 @@ class ArgParserLLM:
             text=str(c.get("text", "")),
             kind=c.get("type", default_kind),
         )
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# FrozenArgParserLLM — drop-in for GoldArgParser, but reads pre-computed
+# predictions instead of dereferencing CSV columns.
+#
+# Workflow:
+#   1. Run scripts/phase2/parse_test_with_teacher.py on the GPU server to
+#      produce a predictions JSONL: one line per row_id, with the predicted
+#      ArgStructureDict from whatever teacher/student backend you choose.
+#   2. Download the JSONL to the Mac.
+#   3. In scripts/run_pipeline.py, swap GoldArgParser → FrozenArgParserLLM
+#      and pass the JSONL path.
+#   4. Phase 1's verifier (Ollama-hosted Qwen-14B) consumes the learned
+#      argument structure exactly as it consumed gold.
+#
+# This separates the GPU-heavy parser inference (uni server) from the
+# Ollama-heavy verifier inference (Mac), and makes the parser stage
+# reproducible: re-running Phase 1 doesn't re-invoke the LLM.
+# ════════════════════════════════════════════════════════════════════════════
+
+import json as _json
+from pathlib import Path as _Path
+
+
+class FrozenArgParserLLM:
+    """Same .parse(row_id) -> ArgStructure interface as GoldArgParser, but
+    backed by a JSONL of pre-computed predictions.
+
+    Each line of the JSONL must be:
+        {"row_id": <int>,
+         "prediction": {"claim_components": [...],
+                        "premise_components": [...],
+                        "citation_components": [...],
+                        "relations": [...]}}
+
+    Missing keys default to []; rows not in the JSONL fall back to a
+    single-claim ArgStructure built from the row's statement (defensive,
+    so a missing prediction doesn't crash the whole pipeline).
+    """
+
+    def __init__(
+        self,
+        rows_by_id: dict,                   # dict[int, LIARArgRow] from Phase 1
+        predictions_path: str | _Path,
+        cfg: ArgParserLLMConfig | None = None,
+    ):
+        self.rows_by_id = rows_by_id
+        self.cfg = cfg or ArgParserLLMConfig()
+        self.predictions_path = str(predictions_path)
+        self.preds: dict[int, dict] = {}
+        self._load()
+
+    def _load(self) -> None:
+        path = _Path(self.predictions_path)
+        if not path.exists():
+            raise FileNotFoundError(
+                f"frozen predictions not found: {self.predictions_path}")
+        with open(path) as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    rec = _json.loads(line)
+                    self.preds[int(rec["row_id"])] = rec["prediction"]
+                except (KeyError, ValueError, _json.JSONDecodeError):
+                    continue
+        print(f"[FrozenArgParserLLM] loaded {len(self.preds)} predictions "
+              f"from {self.predictions_path}")
+
+    def parse(self, row_id: int):
+        from src.arg_parser import ArgStructure, ArgComponent, ArgRelation
+
+        if row_id not in self.rows_by_id:
+            raise KeyError(f"Unknown row id {row_id}")
+        row = self.rows_by_id[row_id]
+        statement = getattr(row, "statement", "")
+
+        pred = self.preds.get(int(row_id))
+        if pred is None:
+            # Defensive fallback: single-claim structure from the statement.
+            # Better than crashing — lets the verifier degrade gracefully.
+            if self.cfg.fallback_to_single_claim:
+                return ArgStructure(
+                    statement=statement,
+                    claim_components=[ArgComponent(id=1, text=statement[:500],
+                                                   kind="claim")],
+                    premise_components=[],
+                    citation_components=[],
+                    relations=[],
+                )
+            return ArgStructure(
+                statement=statement,
+                claim_components=[], premise_components=[],
+                citation_components=[], relations=[],
+            )
+
+        # Reuse the dict→typed conversion from ArgParserLLM
+        adapter = ArgParserLLM(student=None, cfg=self.cfg)  # student unused here
+        return adapter._dict_to_typed(pred, statement)
+
