@@ -1,0 +1,35 @@
+# Phase 2-α: parse test split with local Qwen2.5-3B (fp16, no quantization).
+# Skips bitsandbytes entirely — avoids the torch 2.4 vs transformers
+# set_submodule incompatibility on Pascal hardware.
+#
+# Qwen2.5-3B in fp16 ≈ 6 GB, fits in GTX 1080 Ti's 11 GB with headroom.
+# Slightly weaker parser than 7B at 4-bit, but still very capable —
+# good enough for the architecture-validation question Phase 2-α asks.
+run_name: phase2_parse_test_qwen3b
+
+dataset:
+  liararg_path: data
+  aaec_path: ""
+  abstrct_path: ""
+  aries_clean_path: ""
+  silver_sources: []
+  samples_per_silver_source: 0
+  seed: 42
+  output_dir: phase2_data_liar
+
+teacher:
+  backend: local_hf
+  model: Qwen/Qwen2.5-3B-Instruct
+  max_input_chars: 6000
+  max_output_tokens: 1024
+  rpm_cap: 1000                  # not used for local
+  max_requests_per_day: 100000   # effectively unlimited
+  seed: 42
+  include_cot: false
+  retries_per_call: 1
+  quantization: none             # ← no bnb, no version conflict
+  device: auto
+
+student:
+  backend: dummy
+  base_model: dummy
