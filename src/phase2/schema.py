@@ -69,7 +69,7 @@ class TrainRecord(TypedDict, total=False):
 class TeacherConfig:
     backend: Literal[
         "dummy", "groq", "openai", "anthropic",
-        "hf_inference", "local_hf", "together",
+        "hf_inference", "local_hf", "together", "cerebras",
     ] = "dummy"
     model: str = ""                   # e.g. "llama-3.3-70b-versatile"
     api_base_url: str = ""            # optional override

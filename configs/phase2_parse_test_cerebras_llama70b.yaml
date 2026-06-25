@@ -1,0 +1,38 @@
+# Phase 2-α: parse test split with Llama-3.3-70B via Cerebras Cloud.
+# Cerebras free tier: email-only signup (no card), wafer-scale hardware
+# delivers very fast Llama inference. Same model as our 65 HF Inference
+# rows, so the combined 425-row output is consistent quality.
+#
+# Requires: export CEREBRAS_API_KEY=...
+#   (sign up at https://cloud.cerebras.ai/)
+#
+# Expected: 30 RPM cap on free tier → 360 rows in ~12 min (rate-limit
+# bound, not generation-bound; each call is sub-second on Cerebras).
+run_name: phase2_parse_test_cerebras_llama70b
+
+dataset:
+  liararg_path: data
+  aaec_path: ""
+  abstrct_path: ""
+  aries_clean_path: ""
+  silver_sources: []
+  samples_per_silver_source: 0
+  seed: 42
+  output_dir: phase2_data_liar
+
+teacher:
+  backend: cerebras
+  model: llama-3.3-70b
+  max_input_chars: 2000
+  max_output_tokens: 384
+  rpm_cap: 30                    # free tier cap; bump if you have higher
+  max_requests_per_day: 1000     # well above our 360-row need
+  seed: 42
+  include_cot: false
+  retries_per_call: 3
+  quantization: none
+  device: auto
+
+student:
+  backend: dummy
+  base_model: dummy

@@ -593,6 +593,84 @@ class TogetherTeacher(AnnotatorBase):
 
 
 # ────────────────────────────────────────────────────────────────────────────
+# CerebrasTeacher — Llama-70B via Cerebras Cloud (free tier, no card)
+# ────────────────────────────────────────────────────────────────────────────
+
+class CerebrasTeacher(AnnotatorBase):
+    """Llama-3.3-70B via Cerebras Cloud's free tier.
+
+    Cerebras runs Llama on wafer-scale hardware — significantly faster
+    inference than other Llama-70B providers. Free tier requires only
+    an email (no card as of our setup). Same OpenAI-compatible chat
+    completions schema as Groq/Together.
+
+    Requires env var CEREBRAS_API_KEY. Sign up at
+    https://cloud.cerebras.ai/.
+    """
+    name = "cerebras"
+
+    def __init__(self, cfg: TeacherConfig):
+        super().__init__(cfg)
+        if not os.environ.get("CEREBRAS_API_KEY"):
+            raise RuntimeError(
+                "CEREBRAS_API_KEY not set. Get one from "
+                "https://cloud.cerebras.ai/ (email-only free signup).")
+        try:
+            from cerebras.cloud.sdk import Cerebras
+        except ImportError as e:
+            raise RuntimeError("pip install cerebras-cloud-sdk") from e
+        self._client = Cerebras()
+        self._sleep_between = 60.0 / max(cfg.rpm_cap, 1)
+        self._last_call = 0.0
+        self._n_today = 0
+
+    def annotate(self, text: str, source: str) -> tuple[ArgStructureDict, str]:
+        if self._n_today >= self.cfg.max_requests_per_day:
+            return _empty_structure(), "[teacher: daily cap reached]"
+
+        elapsed = time.time() - self._last_call
+        if elapsed < self._sleep_between:
+            time.sleep(self._sleep_between - elapsed)
+
+        prompt = _build_user_prompt(text, source, self.cfg.max_input_chars)
+        model = self.cfg.model or "llama-3.3-70b"
+        for attempt in range(self.cfg.retries_per_call + 1):
+            try:
+                resp = self._client.chat.completions.create(
+                    model=model,
+                    messages=[
+                        {"role": "system", "content": SYSTEM_PROMPT},
+                        {"role": "user",   "content": prompt},
+                    ],
+                    temperature=0.0,
+                    seed=self.cfg.seed,
+                    max_tokens=self.cfg.max_output_tokens,
+                )
+                self._last_call = time.time()
+                self._n_today += 1
+                raw = resp.choices[0].message.content or ""
+                return _extract_json(raw), _extract_cot(raw)
+            except Exception as e:
+                msg = str(e).lower()
+                if "402" in msg or "payment" in msg or "insufficient" in msg:
+                    raise RuntimeError(
+                        f"Cerebras credits exhausted or billing error. "
+                        f"Check https://cloud.cerebras.ai/\n"
+                        f"Original: {e}") from e
+                if "rate" in msg or "429" in msg or "quota" in msg:
+                    if attempt == self.cfg.retries_per_call:
+                        return _empty_structure(), f"[teacher rate-limit: {e}]"
+                    backoff = 2 ** attempt * 5
+                    print(f"  [teacher:cerebras 429 — sleeping {backoff}s]")
+                    time.sleep(backoff)
+                elif attempt == self.cfg.retries_per_call:
+                    return _empty_structure(), f"[teacher error: {e}]"
+                else:
+                    time.sleep(2)
+        return _empty_structure(), "[teacher: max retries]"
+
+
+# ────────────────────────────────────────────────────────────────────────────
 # Factory
 # ────────────────────────────────────────────────────────────────────────────
 
@@ -607,6 +685,8 @@ def build_teacher(cfg: TeacherConfig) -> AnnotatorBase:
         return LocalHFTeacher(cfg)
     if cfg.backend == "together":
         return TogetherTeacher(cfg)
+    if cfg.backend == "cerebras":
+        return CerebrasTeacher(cfg)
     # Hooks for future backends — kept as explicit raises so config typos
     # don't silently fall through to dummy.
     if cfg.backend == "openai":
