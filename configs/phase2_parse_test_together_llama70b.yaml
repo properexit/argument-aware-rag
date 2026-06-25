@@ -1,0 +1,37 @@
+# Phase 2-α: parse test split with Llama-3.3-70B via Together AI.
+# $25 free credit on signup covers ~30,000 rows of this size, so the
+# 360 remaining (after HF Inference burned out at row 65) cost ~$0.30.
+#
+# Requires: export TOGETHER_API_KEY=...
+#   (sign up free at https://api.together.xyz/ — email only, no card)
+#
+# Together's Llama-70B-Turbo variant is significantly faster than HF
+# Inference's. Expected: ~5 sec/row, so 360 rows finish in ~30 min.
+run_name: phase2_parse_test_together_llama70b
+
+dataset:
+  liararg_path: data
+  aaec_path: ""
+  abstrct_path: ""
+  aries_clean_path: ""
+  silver_sources: []
+  samples_per_silver_source: 0
+  seed: 42
+  output_dir: phase2_data_liar
+
+teacher:
+  backend: together
+  model: meta-llama/Llama-3.3-70B-Instruct-Turbo
+  max_input_chars: 2000
+  max_output_tokens: 384
+  rpm_cap: 60                    # Together free tier allows 60 RPM
+  max_requests_per_day: 10000    # well above our 360-row need
+  seed: 42
+  include_cot: false
+  retries_per_call: 3
+  quantization: none
+  device: auto
+
+student:
+  backend: dummy
+  base_model: dummy

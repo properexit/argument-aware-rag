@@ -350,6 +350,18 @@ class HFInferenceTeacher(AnnotatorBase):
                 return _extract_json(raw), _extract_cot(raw)
             except Exception as e:
                 msg = str(e).lower()
+                # 402 Payment Required = monthly credits exhausted. NEVER
+                # retry these — every retry will 402 again and pollute the
+                # output with silent empty predictions. Stop the whole
+                # session loudly so the user notices before burning more
+                # time. (This was a real footgun on the first Phase 2-α run.)
+                if "402" in msg or "payment required" in msg or "depleted" in msg:
+                    raise RuntimeError(
+                        f"HF Inference credits exhausted (402). The remaining "
+                        f"rows will all fail until credits reset. Switch to a "
+                        f"local backend (local_hf) or wait for monthly reset.\n"
+                        f"Original error: {e}"
+                    ) from e
                 if "rate" in msg or "429" in msg or "quota" in msg:
                     if attempt == self.cfg.retries_per_call:
                         return _empty_structure(), f"[teacher rate-limit: {e}]"
@@ -501,6 +513,86 @@ class LocalHFTeacher(AnnotatorBase):
 
 
 # ────────────────────────────────────────────────────────────────────────────
+# TogetherTeacher — Together AI's hosted Llama-70B (and others)
+# ────────────────────────────────────────────────────────────────────────────
+
+class TogetherTeacher(AnnotatorBase):
+    """Llama-3.3-70B (or other open-weights) via Together AI's hosted API.
+
+    Together gives $25 free credit on signup. Llama-3.3-70B-Instruct-Turbo
+    costs ~$0.88/M tokens, so ~$0.30 covers all 425 rows of our parser
+    experiment — plenty of headroom in the free credit.
+
+    Requires env var TOGETHER_API_KEY (get from https://api.together.xyz/).
+    Same OpenAI-compatible message format as GroqTeacher.
+    """
+    name = "together"
+
+    def __init__(self, cfg: TeacherConfig):
+        super().__init__(cfg)
+        if not os.environ.get("TOGETHER_API_KEY"):
+            raise RuntimeError(
+                "TOGETHER_API_KEY not set. Get one from "
+                "https://api.together.xyz/ (free $25 credit on signup).")
+        try:
+            from together import Together
+        except ImportError as e:
+            raise RuntimeError("pip install together") from e
+        self._client = Together()
+        self._sleep_between = 60.0 / max(cfg.rpm_cap, 1)
+        self._last_call = 0.0
+        self._n_today = 0
+
+    def annotate(self, text: str, source: str) -> tuple[ArgStructureDict, str]:
+        if self._n_today >= self.cfg.max_requests_per_day:
+            return _empty_structure(), "[teacher: daily cap reached]"
+
+        elapsed = time.time() - self._last_call
+        if elapsed < self._sleep_between:
+            time.sleep(self._sleep_between - elapsed)
+
+        prompt = _build_user_prompt(text, source, self.cfg.max_input_chars)
+        model = self.cfg.model or "meta-llama/Llama-3.3-70B-Instruct-Turbo"
+        for attempt in range(self.cfg.retries_per_call + 1):
+            try:
+                resp = self._client.chat.completions.create(
+                    model=model,
+                    messages=[
+                        {"role": "system", "content": SYSTEM_PROMPT},
+                        {"role": "user",   "content": prompt},
+                    ],
+                    temperature=0.0,
+                    seed=self.cfg.seed,
+                    max_tokens=self.cfg.max_output_tokens,
+                )
+                self._last_call = time.time()
+                self._n_today += 1
+                raw = resp.choices[0].message.content or ""
+                return _extract_json(raw), _extract_cot(raw)
+            except Exception as e:
+                msg = str(e).lower()
+                # Hard-fail on 402/payment errors so we don't silently
+                # waste retries on an exhausted account (lesson from
+                # the Phase 2-α HF Inference run).
+                if "402" in msg or "payment" in msg or "insufficient" in msg:
+                    raise RuntimeError(
+                        f"Together credits exhausted or billing error. "
+                        f"Check https://api.together.xyz/settings/billing\n"
+                        f"Original: {e}") from e
+                if "rate" in msg or "429" in msg:
+                    if attempt == self.cfg.retries_per_call:
+                        return _empty_structure(), f"[teacher rate-limit: {e}]"
+                    backoff = 2 ** attempt * 5
+                    print(f"  [teacher:together 429 — sleeping {backoff}s]")
+                    time.sleep(backoff)
+                elif attempt == self.cfg.retries_per_call:
+                    return _empty_structure(), f"[teacher error: {e}]"
+                else:
+                    time.sleep(2)
+        return _empty_structure(), "[teacher: max retries]"
+
+
+# ────────────────────────────────────────────────────────────────────────────
 # Factory
 # ────────────────────────────────────────────────────────────────────────────
 
@@ -513,6 +605,8 @@ def build_teacher(cfg: TeacherConfig) -> AnnotatorBase:
         return HFInferenceTeacher(cfg)
     if cfg.backend == "local_hf":
         return LocalHFTeacher(cfg)
+    if cfg.backend == "together":
+        return TogetherTeacher(cfg)
     # Hooks for future backends — kept as explicit raises so config typos
     # don't silently fall through to dummy.
     if cfg.backend == "openai":
