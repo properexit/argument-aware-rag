@@ -438,41 +438,57 @@ class LocalHFTeacher(AnnotatorBase):
             return _empty_structure(), "[teacher: daily cap reached]"
 
         prompt_user = _build_user_prompt(text, source, self.cfg.max_input_chars)
-        # Use the tokenizer's chat template (works for Qwen, Llama-3.x, Mistral)
         messages = [
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user",   "content": prompt_user},
         ]
+
+        # Canonical Qwen/Llama-3 chat pattern:
+        #   1) apply_chat_template(..., tokenize=False) → str
+        #   2) tokenizer([str], return_tensors="pt") → BatchEncoding with
+        #      proper [batch, seq] shapes AND attention_mask
+        #   3) model.generate(**inputs) — uses attention_mask, no shape bugs
+        # Previous shortcut returned a 1-D tensor on some tokenizers, which
+        # silently broke generate() on certain transformers versions.
         try:
-            input_ids = self._tokenizer.apply_chat_template(
-                messages,
-                add_generation_prompt=True,
-                return_tensors="pt",
-            ).to(self._device)
-        except Exception:
-            # Fallback for tokenizers without chat templates
-            input_ids = self._tokenizer(
-                SYSTEM_PROMPT + "\n\n" + prompt_user,
+            try:
+                prompt_str = self._tokenizer.apply_chat_template(
+                    messages, tokenize=False, add_generation_prompt=True,
+                )
+            except Exception:
+                prompt_str = SYSTEM_PROMPT + "\n\n" + prompt_user
+
+            inputs = self._tokenizer(
+                [prompt_str],
                 return_tensors="pt",
                 truncation=True,
-                max_length=2048,
-            )["input_ids"].to(self._device)
+                max_length=4096,
+            ).to(self._device)
 
-        try:
             with self._torch.no_grad():
                 out = self._model.generate(
-                    input_ids,
+                    **inputs,
                     max_new_tokens=self.cfg.max_output_tokens,
                     do_sample=False,
-                    temperature=1.0,
                     pad_token_id=self._tokenizer.pad_token_id,
+                    eos_token_id=self._tokenizer.eos_token_id,
                 )
-            new_tokens = out[0][input_ids.shape[-1]:]
+            input_len = inputs["input_ids"].shape[-1]
+            new_tokens = out[0][input_len:]
             raw = self._tokenizer.decode(new_tokens, skip_special_tokens=True)
             self._n_today += 1
             return _extract_json(raw), _extract_cot(raw)
         except Exception as e:
-            return _empty_structure(), f"[teacher error: {e}]"
+            # Surface the real error: previous silent except hid the cause.
+            # We print once per failure so the log shows what's actually
+            # wrong instead of just `[teacher error: ]`.
+            import traceback as _tb
+            err_str = f"{type(e).__name__}: {e}"
+            # Print only the first ~3 frames so the log doesn't explode
+            tb_short = "".join(_tb.format_exception(type(e), e, e.__traceback__))[-1500:]
+            print(f"[teacher:local_hf] ERROR — {err_str}\n{tb_short}",
+                  flush=True)
+            return _empty_structure(), f"[teacher error: {err_str}]"
 
     def release(self) -> None:
         """Free GPU memory before student training takes the GPU."""
