@@ -22,9 +22,14 @@ dataset:
 
 teacher:
   backend: cerebras
-  model: llama-3.3-70b
+  model: gpt-oss-120b
   max_input_chars: 2000
-  max_output_tokens: 384
+  # gpt-oss-120b is a reasoning model — it emits chain-of-thought in
+  # message.reasoning BEFORE writing message.content. Cerebras counts
+  # both toward max_tokens, so the budget must cover ~600-1000 tokens
+  # of reasoning + the full JSON output (~300-500 tokens). 2048 is the
+  # safe sweet spot; we saw truncation at 1024 in diagnostics.
+  max_output_tokens: 2048
   rpm_cap: 30                    # free tier cap; bump if you have higher
   max_requests_per_day: 1000     # well above our 360-row need
   seed: 42
