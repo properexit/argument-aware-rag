@@ -54,7 +54,13 @@ student:
   # training horizon thanks to Qwen's RoPE, so we leave them larger here
   # for inference quality. Production training values were 512/256.
   max_input_len: 2048              # inference reach (training was 512)
-  max_target_len: 768              # inference JSON budget (training was 256)
+  # IMPORTANT: keep close to training max_target_len. Model never learned
+  # to emit <|im_end|> past 256 tokens, so a 768-token inference budget
+  # made it produce 500+ tokens of post-JSON garbage per row — capping
+  # wall-clock at ~67s/row on Pascal. 384 caps worst-case at ~35s and
+  # is still more than the average training target (most JSON outputs
+  # fit in 200-300 tokens).
+  max_target_len: 384              # inference JSON budget (training was 256)
   batch_size: 2                    # micro-batch — tight on Pascal
   grad_accum: 16                   # effective batch 32
   learning_rate: 0.0002
