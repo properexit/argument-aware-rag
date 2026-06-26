@@ -360,17 +360,52 @@ class HFTrainer(StudentTrainerBase):
             raise RuntimeError("HFTrainer not loaded — call .load() first")
         (torch, *_rest) = self._import_hf()
         inp = _format_input(text)
-        enc = self._tokenizer(inp, max_length=self.cfg.max_input_len,
-                              truncation=True, return_tensors="pt").to(self._device)
+
+        # Use the chat template at inference IFF it was used at training (i.e.
+        # causal LM trained via encode_causal). Without this, the model gets
+        # raw text input but was trained on chat-formatted input → format
+        # mismatch → garbage output → our parser returns empty fallback.
+        # (This was a silent bug that made a perfectly-trained Qwen look like
+        # it had collapsed.)
+        if not self._is_seq2seq:
+            try:
+                prompt_str = self._tokenizer.apply_chat_template(
+                    [{"role": "user", "content": inp}],
+                    tokenize=False,
+                    add_generation_prompt=True,
+                )
+            except Exception:
+                prompt_str = inp + "\n\n"
+            enc = self._tokenizer(
+                [prompt_str],
+                return_tensors="pt",
+                truncation=True,
+                max_length=self.cfg.max_input_len,
+            ).to(self._device)
+        else:
+            enc = self._tokenizer(inp, max_length=self.cfg.max_input_len,
+                                  truncation=True, return_tensors="pt").to(self._device)
+
         with torch.no_grad():
-            out = self._model.generate(
-                **enc,
+            # Greedy decoding for causal LMs (no_repeat_ngram_size=3 + beam
+            # search was distorting JSON structure — beams can avoid the
+            # closing brace because they "look like" a repeated trigram).
+            gen_kwargs = dict(
                 max_new_tokens=self.cfg.max_target_len,
-                num_beams=4,
-                early_stopping=True,
-                no_repeat_ngram_size=3,
+                pad_token_id=self._tokenizer.pad_token_id,
+                eos_token_id=self._tokenizer.eos_token_id,
+                do_sample=False,
             )
-        raw = self._tokenizer.decode(out[0], skip_special_tokens=True)
+            if self._is_seq2seq:
+                gen_kwargs.update(num_beams=4, early_stopping=True)
+            out = self._model.generate(**enc, **gen_kwargs)
+
+        if self._is_seq2seq:
+            raw = self._tokenizer.decode(out[0], skip_special_tokens=True)
+        else:
+            # Strip the prompt portion — only decode the newly-generated tokens
+            input_len = enc["input_ids"].shape[-1]
+            raw = self._tokenizer.decode(out[0][input_len:], skip_special_tokens=True)
         return _parse_output(raw)
 
 
