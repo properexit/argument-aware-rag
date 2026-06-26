@@ -48,8 +48,13 @@ student:
   # Fix: shorter sequences (most of our training examples are < 500 tokens
   # anyway) + small batch + gradient checkpointing.
   base_model: Qwen/Qwen2.5-0.5B-Instruct
-  max_input_len: 512               # most extractive training examples fit
-  max_target_len: 256              # JSON output for typical row
+  # NOTE: max_input_len + max_target_len are read by BOTH train() and predict().
+  # Training cap (smaller for VRAM): see comment above.
+  # Inference uses these values too — the model generalises beyond its
+  # training horizon thanks to Qwen's RoPE, so we leave them larger here
+  # for inference quality. Production training values were 512/256.
+  max_input_len: 2048              # inference reach (training was 512)
+  max_target_len: 768              # inference JSON budget (training was 256)
   batch_size: 2                    # micro-batch — tight on Pascal
   grad_accum: 16                   # effective batch 32
   learning_rate: 0.0002
