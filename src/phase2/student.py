@@ -213,10 +213,21 @@ class HFTrainer(StudentTrainerBase):
         if tokenizer.pad_token is None:
             tokenizer.pad_token = tokenizer.eos_token
         ModelCls = S2SLM if is_seq2seq else CausalLM
-        # IMPORTANT: load weights in fp32 even if we want fp16 training.
-        # AMP (enabled via TrainingArguments.fp16=True) maintains fp32
-        # master weights and casts to fp16 only for forward/backward.
-        model = ModelCls.from_pretrained(self.cfg.base_model)
+        # IMPORTANT: explicitly force fp32 loading. Without this kwarg,
+        # from_pretrained() inherits the checkpoint's stored dtype — bf16
+        # for Qwen 2.5, fp16 for some others. AMP's grad scaler then can't
+        # unscale non-fp32 gradients ("_amp_foreach_non_finite_check_and_unscale_cuda
+        # not implemented for 'BFloat16'") — same class of footgun as the
+        # T5+fp16 NaN cascade.
+        # The right pattern is always: load fp32 master, let AMP cast to fp16
+        # during forward/backward via TrainingArguments.fp16=True.
+        try:
+            model = ModelCls.from_pretrained(self.cfg.base_model,
+                                             dtype=torch.float32)
+        except TypeError:
+            # Older transformers used torch_dtype= kwarg
+            model = ModelCls.from_pretrained(self.cfg.base_model,
+                                             torch_dtype=torch.float32)
         if self.cfg.gradient_checkpointing:
             model.gradient_checkpointing_enable()
             if hasattr(model.config, "use_cache"):
