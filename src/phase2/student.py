@@ -347,8 +347,28 @@ class HFTrainer(StudentTrainerBase):
         is_seq2seq = self._is_seq2seq_model(self.cfg.base_model)
         self._is_seq2seq = is_seq2seq
         self._tokenizer = AutoTokenizer.from_pretrained(model_path)
+        if self._tokenizer.pad_token is None:
+            self._tokenizer.pad_token = self._tokenizer.eos_token
         ModelCls = S2SLM if is_seq2seq else CausalLM
         self._model = ModelCls.from_pretrained(model_path)
+
+        # CRITICAL: re-enable KV cache for inference. Training sets
+        # use_cache=False as a hard requirement of gradient_checkpointing,
+        # and this setting is persisted in the checkpoint's config. Loading
+        # the model carries the False forward into inference, where it
+        # makes every generated token re-run the full forward pass over
+        # the entire context → ~150× slower decoding on long inputs.
+        if hasattr(self._model.config, "use_cache"):
+            self._model.config.use_cache = True
+        # Also disable any inherited gradient_checkpointing flag (inference
+        # doesn't compute grads anyway, but the flag can still trigger
+        # checkpoint-wrapped forwards).
+        if hasattr(self._model, "gradient_checkpointing_disable"):
+            try:
+                self._model.gradient_checkpointing_disable()
+            except Exception:
+                pass
+
         self._device = "cuda" if torch.cuda.is_available() else (
             "mps" if torch.backends.mps.is_available() else "cpu")
         self._model.to(self._device)
