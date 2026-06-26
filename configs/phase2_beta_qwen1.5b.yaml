@@ -41,23 +41,25 @@ teacher:
 
 student:
   backend: hf
-  # Qwen-0.5B fits comfortably on a GTX 1080 Ti (11 GB) at full fp32 master
-  # + AMP fp16. Initial attempt with Qwen-1.5B + batch 8 OOM'd at the first
-  # step (~10.5 GB used). 0.5B is also closer to the "lightweight parser
-  # only" intent — minimal viable student before we invest in LoRA for 1.5B+.
+  # Pascal hardware (GTX 1080 Ti) has no flash-attn — self-attention is
+  # quadratic O(seq²) on memory. Even Qwen-0.5B OOM'd at batch 4 × 1536-token
+  # sequences (~10.5 GB used). The bottleneck is the attention scores matrix,
+  # not the model weights.
+  # Fix: shorter sequences (most of our training examples are < 500 tokens
+  # anyway) + small batch + gradient checkpointing.
   base_model: Qwen/Qwen2.5-0.5B-Instruct
-  max_input_len: 1024              # most extractive examples fit
-  max_target_len: 512              # JSON output budget
-  batch_size: 4                    # 0.5B fits batch 4 comfortably at seq 1536
-  grad_accum: 8                    # effective batch 32
+  max_input_len: 512               # most extractive training examples fit
+  max_target_len: 256              # JSON output for typical row
+  batch_size: 2                    # micro-batch — tight on Pascal
+  grad_accum: 16                   # effective batch 32
   learning_rate: 0.0002
   weight_decay: 0.01
   warmup_ratio: 0.1
   num_epochs: 3
-  fp16: true                       # Qwen is fp16-stable (unlike T5)
-  gradient_checkpointing: false    # 0.5B doesn't need it
+  fp16: true                       # Qwen is fp16-stable
+  gradient_checkpointing: true     # ESSENTIAL on Pascal — recomputes activations
   optim: adafactor                 # rank-1 state — lowest optimizer footprint
   seed: 42
-  eval_every_steps: 0              # epoch-level eval
+  eval_every_steps: 0
 
 student_output_dir: phase2_student_beta_qwen0.5b
