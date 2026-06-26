@@ -209,17 +209,16 @@ class HFTrainer(StudentTrainerBase):
               f"(seq2seq={is_seq2seq})")
 
         tokenizer = AutoTokenizer.from_pretrained(self.cfg.base_model)
+        # Causal LMs often lack a pad token — use EOS as pad
+        if tokenizer.pad_token is None:
+            tokenizer.pad_token = tokenizer.eos_token
         ModelCls = S2SLM if is_seq2seq else CausalLM
         # IMPORTANT: load weights in fp32 even if we want fp16 training.
         # AMP (enabled via TrainingArguments.fp16=True) maintains fp32
         # master weights and casts to fp16 only for forward/backward.
-        # Loading directly in fp16 conflicts with AMP's gradient scaler
-        # ("Attempting to unscale FP16 gradients" — torch raises that
-        # because there are no fp32 grads to unscale).
         model = ModelCls.from_pretrained(self.cfg.base_model)
         if self.cfg.gradient_checkpointing:
             model.gradient_checkpointing_enable()
-            # For T5: gradient checkpointing requires use_cache=False
             if hasattr(model.config, "use_cache"):
                 model.config.use_cache = False
 
@@ -231,7 +230,7 @@ class HFTrainer(StudentTrainerBase):
             val_recs = train_recs[-split:]
             train_recs = train_recs[:-split]
 
-        def encode(rec: TrainRecord):
+        def encode_seq2seq(rec: TrainRecord):
             inp = _format_input(rec["input"])
             tgt = _format_target(rec["output"], rec.get("reasoning", ""))
             ids = tokenizer(inp, max_length=self.cfg.max_input_len,
@@ -247,6 +246,52 @@ class HFTrainer(StudentTrainerBase):
                 "labels":         labels.squeeze(),
             }
 
+        def encode_causal(rec: TrainRecord):
+            """Causal-LM encoding: concatenate prompt + target into one
+            sequence, mask the prompt portion in labels so we only train
+            on the target tokens. Uses the tokenizer's chat template so
+            instruction-tuned models (Qwen, Llama-3.x) format input the
+            way they expect."""
+            inp = _format_input(rec["input"])
+            tgt = _format_target(rec["output"], rec.get("reasoning", ""))
+            # Try chat template; fall back to plain concat for tokenizers
+            # without one (e.g. base/non-instruct models)
+            try:
+                prompt_str = tokenizer.apply_chat_template(
+                    [
+                        {"role": "user",      "content": inp},
+                    ],
+                    tokenize=False,
+                    add_generation_prompt=True,
+                )
+                full_str = prompt_str + tgt + tokenizer.eos_token
+            except Exception:
+                prompt_str = inp + "\n\n"
+                full_str = prompt_str + tgt + tokenizer.eos_token
+
+            max_total = self.cfg.max_input_len + self.cfg.max_target_len
+            full = tokenizer(full_str, max_length=max_total,
+                             truncation=True, padding="max_length",
+                             return_tensors="pt")
+            # Find where the target tokens start (= length of the prompt-only
+            # tokenisation, capped at max_total)
+            prompt_ids = tokenizer(prompt_str, truncation=True,
+                                   max_length=max_total, return_tensors="pt")
+            prompt_len = min(prompt_ids["input_ids"].shape[1], max_total)
+
+            labels = full["input_ids"].clone()
+            labels[0, :prompt_len] = -100                              # mask prompt
+            labels[labels == tokenizer.pad_token_id] = -100            # mask pad
+            return {
+                "input_ids":      full["input_ids"].squeeze(),
+                "attention_mask": full["attention_mask"].squeeze(),
+                "labels":         labels.squeeze(),
+            }
+
+        encode = encode_seq2seq if is_seq2seq else encode_causal
+        print(f"[student:hf] encoding {len(train_recs)} train + "
+              f"{len(val_recs)} val records "
+              f"({'seq2seq' if is_seq2seq else 'causal'} format)")
         train_ds = [encode(r) for r in train_recs]
         val_ds   = [encode(r) for r in val_recs] if val_recs else None
 

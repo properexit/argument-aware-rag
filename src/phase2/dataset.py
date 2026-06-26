@@ -340,3 +340,49 @@ def read_jsonl(path: str | Path) -> list[TrainRecord]:
                 continue
             out.append(json.loads(line))
     return out
+
+
+# ────────────────────────────────────────────────────────────────────────────
+# Phase 2-β unified-corpus loader
+# ────────────────────────────────────────────────────────────────────────────
+
+def load_unified_corpus(
+    unified_dir: str | Path,
+    exclude_sources: tuple[str, ...] = (),
+    include_silver: bool = True,
+    splits: tuple[str, ...] = ("train", "val", "test"),
+) -> list[TrainRecord]:
+    """Load all unified JSONLs from a directory and combine them.
+
+    Expects filename pattern <source>_<split>.jsonl (e.g. abstrct_train.jsonl).
+    Skips sources in `exclude_sources` — typically used to keep LIARArg
+    out of training while still letting it sit in the unified directory
+    for the integration evaluation.
+
+    Returns one combined list, with each record's "split" field already
+    populated by the loaders. Caller can filter by record["split"].
+    """
+    unified_dir = Path(unified_dir)
+    if not unified_dir.is_dir():
+        raise FileNotFoundError(f"unified_dir not found: {unified_dir}")
+
+    out: list[TrainRecord] = []
+    by_source: dict[str, int] = {}
+    for jsonl_path in sorted(unified_dir.glob("*.jsonl")):
+        # Filename: <source>_<split>.jsonl — split out the trailing _split
+        stem = jsonl_path.stem
+        if "_" not in stem:
+            continue
+        source, split = stem.rsplit("_", 1)
+        if source in exclude_sources or split not in splits:
+            continue
+        recs = read_jsonl(jsonl_path)
+        if not include_silver:
+            recs = [r for r in recs if r.get("label_kind", "gold") == "gold"]
+        out.extend(recs)
+        by_source[source] = by_source.get(source, 0) + len(recs)
+
+    print(f"[unified] loaded {len(out)} records across {len(by_source)} source(s):")
+    for src in sorted(by_source):
+        print(f"  {src}: {by_source[src]}")
+    return out

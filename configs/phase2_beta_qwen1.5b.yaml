@@ -1,0 +1,57 @@
+# Phase 2-β v1: distill Qwen-1.5B-Instruct on 4 gold extractive corpora.
+#
+# Training pool (excludes LIARArg — that's the held-out integration target):
+#   - AbstRCT      (medical RCT abstracts)
+#   - Microtext    (mixed-topic opinion essays)
+#   - CDCP         (US e-rulemaking public comments)
+#   - PERSPECTRUM  (controversial claims + perspectives + evidence)
+#   Total: ~1494 train + 268 val + 688 test records, 4 domains.
+#
+# Server-side prereqs:
+#   - Phase 2 data assembled in ~/argument-aware-rag/phase2_data/unified/
+#   - venv has transformers, accelerate, sentencepiece (already installed)
+#
+# Expected wall-clock on GTX 1080 Ti:
+#   - Tokenisation:   ~1 min
+#   - Training:       ~30-60 min (~3 epochs over 1494 records)
+#   - Eval per split: ~5-10 min (Qwen-1.5B generation is fast)
+#
+# Comparison target: Phase 2-α's 6-way F1 = 0.254 on LIARArg via Phase 1.
+# A distilled Qwen-1.5B that beats that = Phase 2-β architecture validated.
+run_name: phase2_beta_qwen1.5b
+
+dataset:
+  liararg_path: ""       # not used here — we load unified directory directly
+  aaec_path: ""
+  abstrct_path: ""
+  aries_clean_path: ""
+  silver_sources: []
+  samples_per_silver_source: 0
+  val_frac: 0.10
+  test_frac: 0.10
+  seed: 42
+  output_dir: phase2_data/unified    # ← unified corpus directory
+
+teacher:
+  # Not invoked during this training run; reserved for later silver passes.
+  backend: dummy
+  model: ""
+
+student:
+  backend: hf
+  base_model: Qwen/Qwen2.5-1.5B-Instruct
+  max_input_len: 1024              # most extractive examples fit in this
+  max_target_len: 512              # JSON output budget
+  batch_size: 8                    # 1.5B fits big batches at fp16
+  grad_accum: 4                    # effective batch 32
+  learning_rate: 0.0002            # slightly lower for stable Qwen fine-tune
+  weight_decay: 0.01
+  warmup_ratio: 0.1
+  num_epochs: 3
+  fp16: true                       # Qwen is fp16-stable (unlike T5)
+  gradient_checkpointing: false    # 1.5B doesn't need it on 11 GB
+  optim: adafactor                 # ~3-4 GB lower optimizer state than Adam
+  seed: 42
+  eval_every_steps: 0              # epoch-level eval
+
+student_output_dir: phase2_student_beta_qwen1.5b
