@@ -83,6 +83,11 @@ def main() -> int:
                          "from this JSONL (one row: {row_id, prediction, "
                          "reasoning}) instead of GoldArgParser. Used for "
                          "Phase 2-α (learned-parser integration test).")
+    ap.add_argument("--restrict-row-ids", default="",
+                    help="Path to a text file with one row_id per line. "
+                         "Phase 1 will evaluate ONLY those rows, ignoring "
+                         "--n's stratified sample. Used for partial re-runs "
+                         "(e.g. backfilling fallback rows in Phase 2-α).")
     args = ap.parse_args()
 
     os.makedirs(args.out_dir, exist_ok=True)
@@ -90,8 +95,19 @@ def main() -> int:
     print("[run_pipeline] loading split")
     split = load_split(args.data_dir)
     test_rows = split["test"]
-    sample = _stratified_sample(test_rows, args.n, seed=args.seed)
-    print(f"[run_pipeline] evaluating on {len(sample)} test claims")
+
+    if args.restrict_row_ids:
+        with open(args.restrict_row_ids) as f:
+            keep_ids = {int(line.strip()) for line in f if line.strip()}
+        sample = [r for r in test_rows if r.id in keep_ids]
+        missing = keep_ids - {r.id for r in sample}
+        print(f"[run_pipeline] restricted to {len(sample)} test rows "
+              f"from --restrict-row-ids "
+              f"({len(missing)} requested ids not in test split)")
+    else:
+        sample = _stratified_sample(test_rows, args.n, seed=args.seed)
+        print(f"[run_pipeline] evaluating on {len(sample)} test claims "
+              f"(stratified sample of n={args.n})")
 
     print("[run_pipeline] loading retrieval index")
     retriever = HybridRetriever.load(args.index_dir, device=args.device)
