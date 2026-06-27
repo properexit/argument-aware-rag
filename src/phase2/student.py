@@ -228,6 +228,37 @@ class HFTrainer(StudentTrainerBase):
             # Older transformers used torch_dtype= kwarg
             model = ModelCls.from_pretrained(self.cfg.base_model,
                                              torch_dtype=torch.float32)
+
+        # ── LoRA wrap ──
+        # Phase 2-β-v2: train low-rank adapters on attention projections
+        # instead of the full model. Cuts gradient + optimizer memory to
+        # near-zero, so Qwen-1.5B+ fits on 11 GB Pascal.
+        if self.cfg.use_lora:
+            try:
+                from peft import LoraConfig, get_peft_model, TaskType
+            except ImportError as e:
+                raise RuntimeError("pip install peft for LoRA support") from e
+            target_modules = [m.strip() for m in
+                              self.cfg.lora_target_modules.split(",")
+                              if m.strip()]
+            lora_cfg = LoraConfig(
+                r=self.cfg.lora_r,
+                lora_alpha=self.cfg.lora_alpha,
+                lora_dropout=self.cfg.lora_dropout,
+                target_modules=target_modules,
+                bias="none",
+                task_type=TaskType.SEQ_2_SEQ_LM if is_seq2seq
+                          else TaskType.CAUSAL_LM,
+            )
+            model = get_peft_model(model, lora_cfg)
+            trainable, total = 0, 0
+            for p in model.parameters():
+                total += p.numel()
+                if p.requires_grad:
+                    trainable += p.numel()
+            print(f"[student:hf:lora] r={self.cfg.lora_r} "
+                  f"trainable={trainable/1e6:.1f}M / {total/1e6:.1f}M "
+                  f"({100*trainable/total:.2f}%)  targets={target_modules}")
         if self.cfg.gradient_checkpointing:
             model.gradient_checkpointing_enable()
             if hasattr(model.config, "use_cache"):
@@ -346,11 +377,33 @@ class HFTrainer(StudentTrainerBase):
         model_path = str(model_path)
         is_seq2seq = self._is_seq2seq_model(self.cfg.base_model)
         self._is_seq2seq = is_seq2seq
-        self._tokenizer = AutoTokenizer.from_pretrained(model_path)
+
+        # Detect whether the saved dir is a full model checkpoint or just a
+        # LoRA adapter (which contains adapter_config.json + adapter_model.*).
+        adapter_path = Path(model_path) / "adapter_config.json"
+        is_lora_adapter = adapter_path.exists()
+
+        if is_lora_adapter:
+            # Load tokenizer from the saved dir (we save it there too),
+            # then load the BASE model + apply the adapter on top
+            self._tokenizer = AutoTokenizer.from_pretrained(model_path)
+            ModelCls = S2SLM if is_seq2seq else CausalLM
+            try:
+                from peft import PeftModel
+            except ImportError as e:
+                raise RuntimeError("pip install peft to load LoRA adapters") from e
+            base = ModelCls.from_pretrained(self.cfg.base_model)
+            self._model = PeftModel.from_pretrained(base, model_path)
+            print(f"[student:hf:load] base={self.cfg.base_model} + "
+                  f"LoRA adapter from {model_path}")
+        else:
+            self._tokenizer = AutoTokenizer.from_pretrained(model_path)
+            ModelCls = S2SLM if is_seq2seq else CausalLM
+            self._model = ModelCls.from_pretrained(model_path)
+            print(f"[student:hf:load] full model from {model_path}")
+
         if self._tokenizer.pad_token is None:
             self._tokenizer.pad_token = self._tokenizer.eos_token
-        ModelCls = S2SLM if is_seq2seq else CausalLM
-        self._model = ModelCls.from_pretrained(model_path)
 
         # CRITICAL: re-enable KV cache for inference. Training sets
         # use_cache=False as a hard requirement of gradient_checkpointing,
@@ -427,6 +480,79 @@ class HFTrainer(StudentTrainerBase):
             input_len = enc["input_ids"].shape[-1]
             raw = self._tokenizer.decode(out[0][input_len:], skip_special_tokens=True)
         return _parse_output(raw)
+
+    # ────────────────────────────────────────────────────────────────────
+    # Batched inference (Phase 2-β-v2)
+    # ────────────────────────────────────────────────────────────────────
+
+    def predict_batch(self, texts: list[str]
+                      ) -> list[tuple[ArgStructureDict, str]]:
+        """Run inference on a list of inputs in one batched generate() call.
+
+        ~3-5× faster than calling predict() in a loop because the GPU
+        stays fed (vs Python overhead dominating between single-row calls).
+
+        For causal LMs, we LEFT-pad the inputs so all rows have their
+        content ending at the same position — generation then continues
+        from that aligned position for every row.
+        """
+        if self._model is None:
+            raise RuntimeError("HFTrainer not loaded — call .load() first")
+        if not texts:
+            return []
+        (torch, *_rest) = self._import_hf()
+        tok = self._tokenizer
+        model = self._model
+
+        # Build prompts (chat template for causal, raw for seq2seq)
+        prompts = []
+        for text in texts:
+            inp = _format_input(text)
+            if not self._is_seq2seq:
+                try:
+                    p = tok.apply_chat_template(
+                        [{"role": "user", "content": inp}],
+                        tokenize=False, add_generation_prompt=True,
+                    )
+                except Exception:
+                    p = inp + "\n\n"
+            else:
+                p = inp
+            prompts.append(p)
+
+        # LEFT-pad causal LM inputs — required for batched generation
+        old_side = tok.padding_side
+        if not self._is_seq2seq:
+            tok.padding_side = "left"
+        try:
+            enc = tok(prompts, return_tensors="pt", truncation=True,
+                      max_length=self.cfg.max_input_len, padding=True
+                      ).to(self._device)
+        finally:
+            tok.padding_side = old_side
+
+        gen_kwargs = dict(
+            max_new_tokens=self.cfg.max_target_len,
+            pad_token_id=tok.pad_token_id,
+            eos_token_id=tok.eos_token_id,
+            do_sample=False,
+        )
+        if self._is_seq2seq:
+            gen_kwargs.update(num_beams=4, early_stopping=True)
+
+        with torch.no_grad():
+            out = model.generate(**enc, **gen_kwargs)
+
+        # Strip the prompt portion from each row
+        input_len = enc["input_ids"].shape[-1]
+        results = []
+        for i in range(out.shape[0]):
+            if self._is_seq2seq:
+                raw = tok.decode(out[i], skip_special_tokens=True)
+            else:
+                raw = tok.decode(out[i][input_len:], skip_special_tokens=True)
+            results.append(_parse_output(raw))
+        return results
 
 
 # ────────────────────────────────────────────────────────────────────────────

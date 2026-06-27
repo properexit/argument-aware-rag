@@ -1,0 +1,61 @@
+# Phase 2-β v2: LoRA fine-tune Qwen-1.5B-Instruct on 4 gold extractive corpora.
+#
+# v1 (Qwen-0.5B full FT) baseline: avg comp-F1 = 0.108 across 4 held-out tests.
+# v2 hypothesis: bigger model + longer training context fixes the two big v1
+# failures (AbstRCT 75% empty, PERSPECTRUM 91% empty — both caused by inputs
+# overflowing the 512-token training horizon, and 0.5B being too small).
+#
+# Why LoRA: training all 1.5B params would need ~24 GB VRAM; LoRA freezes
+# the base model and only trains rank-16 adapter matrices on the attention
+# projections (~5M trainable params, ~3.5% of total). Drops gradient +
+# optimizer state from ~6 GB to ~10 MB, leaving room for longer sequences.
+#
+# Server-side prereqs:
+#   pip install peft     (~30 sec, one-time)
+#   git pull             (config + LoRA-aware HFTrainer)
+#
+# Expected wall-clock on GTX 1080 Ti:
+#   - Training: ~70-90 min for 3 epochs × 1494 records
+#   - Eval (batched, 50 rows × 4 domains): ~5-10 min
+run_name: phase2_beta_qwen1.5b_lora
+
+dataset:
+  liararg_path: ""
+  aaec_path: ""
+  abstrct_path: ""
+  aries_clean_path: ""
+  silver_sources: []
+  samples_per_silver_source: 0
+  val_frac: 0.10
+  test_frac: 0.10
+  seed: 42
+  output_dir: phase2_data/unified
+
+teacher:
+  backend: dummy
+  model: ""
+
+student:
+  backend: hf
+  base_model: Qwen/Qwen2.5-1.5B-Instruct
+  max_input_len: 1024              # 2x v1 → catches longer AbstRCT/PERSPECTRUM
+  max_target_len: 384              # generous JSON budget
+  batch_size: 2                    # tight on Pascal at seq 1408
+  grad_accum: 16                   # effective batch 32 (same as v1)
+  learning_rate: 0.0002            # standard LoRA LR
+  weight_decay: 0.01
+  warmup_ratio: 0.1
+  num_epochs: 3
+  fp16: true
+  gradient_checkpointing: true     # ESSENTIAL at seq 1024 — Pascal attention is O(seq²)
+  optim: adafactor
+  seed: 42
+  eval_every_steps: 0
+  # ── LoRA ──
+  use_lora: true
+  lora_r: 16
+  lora_alpha: 32
+  lora_dropout: 0.05
+  lora_target_modules: "q_proj,k_proj,v_proj,o_proj"
+
+student_output_dir: phase2_student_beta_qwen1.5b_lora
