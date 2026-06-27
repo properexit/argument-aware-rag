@@ -40,8 +40,12 @@ student:
   base_model: Qwen/Qwen2.5-1.5B-Instruct
   max_input_len: 1024              # 2x v1 → catches longer AbstRCT/PERSPECTRUM
   max_target_len: 384              # generous JSON budget
-  batch_size: 2                    # tight on Pascal at seq 1408
-  grad_accum: 16                   # effective batch 32 (same as v1)
+  # Qwen-1.5B's 152K vocab makes the cross-entropy loss intermediate
+  # ~1.7 GB at fp32 for [batch=2, seq=1408, vocab=152K] — overflowed
+  # the 11 GB ceiling. Batch=1 halves that to ~850 MB and fits comfortably.
+  # Effective batch stays at 32 via grad_accum doubling.
+  batch_size: 1
+  grad_accum: 32                   # effective batch 32 (same as v1)
   learning_rate: 0.0002            # standard LoRA LR
   weight_decay: 0.01
   warmup_ratio: 0.1
