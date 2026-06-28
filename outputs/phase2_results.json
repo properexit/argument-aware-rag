@@ -1,0 +1,165 @@
+{
+  "experiments": [
+    {
+      "id": "phase1_gold_parser",
+      "name": "Phase 1 gold parser (oracle)",
+      "description": "Baseline using gold CSV lookup as parser. Oracle upper bound for Phase 1 architecture.",
+      "training": null,
+      "phase1_integration_liararg": {
+        "test_set": "LIAR-aligned n=952",
+        "macro_f1_6way": 0.388,
+        "macro_f1_6way_stratified": 0.422,
+        "test_set_stratified": "stratified n=425"
+      }
+    },
+    {
+      "id": "phase1_flat_rag",
+      "name": "Phase 1 flat-RAG baseline",
+      "description": "No structural parser. Pure dense+BM25 retrieval, no role-targeted queries.",
+      "training": null,
+      "phase1_integration_liararg": {
+        "test_set": "LIAR-aligned n=952",
+        "macro_f1_6way": 0.127,
+        "macro_f1_6way_stratified": 0.114
+      }
+    },
+    {
+      "id": "phase2_alpha",
+      "name": "Phase 2-α: LLM-as-parser",
+      "description": "Pre-compute argument structure for LIARArg test using cloud LLM (gpt-oss-120b via Cerebras), feed via FrozenArgParserLLM into Phase 1.",
+      "parser": {
+        "model": "gpt-oss-120b",
+        "backend": "cerebras",
+        "training": null,
+        "notes": "Zero-shot. Mixed parser sources due to API limits: 65 rows from Llama-3.3-70B (HF Inference), 320 from gpt-oss-120b (Cerebras), 40 fallback. 99.5% real parse rate after backfill+retry."
+      },
+      "phase1_integration_liararg": {
+        "test_set": "stratified n=425",
+        "macro_f1_6way": 0.254,
+        "macro_f1_3way": 0.461,
+        "within_1_accuracy": 0.616,
+        "mae_on_scale": 1.435
+      }
+    },
+    {
+      "id": "phase2_beta_v1",
+      "name": "Phase 2-β v1: Qwen-0.5B full FT",
+      "description": "Smallest distilled student. Full fine-tune on 4 gold extractive corpora.",
+      "training": {
+        "base_model": "Qwen/Qwen2.5-0.5B-Instruct",
+        "method": "full fine-tune",
+        "trainable_params_m": 494,
+        "train_records": 1494,
+        "domains": ["AbstRCT", "Microtext", "CDCP", "PERSPECTRUM"],
+        "epochs": 3,
+        "wall_clock_hours": 1.5,
+        "hardware": "GTX 1080 Ti",
+        "config": "configs/phase2_beta_qwen1.5b.yaml"
+      },
+      "parser_level_eval": {
+        "cap_per_domain": 100,
+        "avg_component_f1": 0.108,
+        "per_domain": {
+          "microtext": {"n": 11, "component_f1": 0.116, "relation_f1": 0.000, "empty_pct": 0},
+          "cdcp":      {"n": 100, "component_f1": 0.169, "relation_f1": 0.004, "empty_pct": 13},
+          "abstrct":   {"n": 100, "component_f1": 0.108, "relation_f1": 0.055, "empty_pct": 75},
+          "perspectrum": {"n": 100, "component_f1": 0.038, "relation_f1": 0.010, "empty_pct": 91}
+        },
+        "per_role_f1": {
+          "claim_f1_best": 0.501,
+          "claim_f1_best_domain": "cdcp",
+          "premise_f1_max": 0.134,
+          "citation_f1": "0 everywhere"
+        }
+      },
+      "phase1_integration_liararg": {
+        "ran": false,
+        "reason": "62% empty on LIARArg parse, run killed after 90 rows. Expected integration F1 near flat-RAG."
+      },
+      "adapter_location_server": "~/argument-aware-rag/phase2_student_beta_qwen0.5b/"
+    },
+    {
+      "id": "phase2_beta_v2",
+      "name": "Phase 2-β v2: Qwen-1.5B + LoRA, same data",
+      "description": "Scaling experiment. Same 4 gold corpora as v1, but bigger model + LoRA + longer training context.",
+      "training": {
+        "base_model": "Qwen/Qwen2.5-1.5B-Instruct",
+        "method": "LoRA r=16",
+        "trainable_params_m": 4.4,
+        "train_records": 1494,
+        "domains": ["AbstRCT", "Microtext", "CDCP", "PERSPECTRUM"],
+        "epochs": 3,
+        "wall_clock_hours": 13.5,
+        "hardware": "GTX 1080 Ti",
+        "max_input_len_train": 512,
+        "max_target_len_train": 256,
+        "config": "configs/phase2_beta_qwen1.5b_lora.yaml"
+      },
+      "parser_level_eval": {
+        "cap_per_domain": 50,
+        "avg_component_f1": 0.219,
+        "per_domain": {
+          "microtext":  {"n": 11, "component_f1": 0.393, "relation_f1": 0.000, "empty_pct": 0,  "claim_f1": 0.500, "premise_f1": 0.680},
+          "cdcp":       {"n": 50, "component_f1": 0.202, "relation_f1": 0.000, "empty_pct": 12, "claim_f1": 0.518, "premise_f1": 0.089},
+          "abstrct":    {"n": 50, "component_f1": 0.223, "relation_f1": 0.125, "empty_pct": 50, "claim_f1": 0.352, "premise_f1": 0.318},
+          "perspectrum": {"n": 50, "component_f1": 0.056, "relation_f1": 0.006, "empty_pct": 88, "claim_f1": 0.103, "premise_f1": 0.064}
+        }
+      },
+      "phase1_integration_liararg": {"ran": false, "reason": "skipped; v3 supersedes"},
+      "adapter_location_server": "~/argument-aware-rag/phase2_student_beta_qwen1.5b_lora/"
+    },
+    {
+      "id": "phase2_beta_v3",
+      "name": "Phase 2-β v3: continual from v2 + AAEC",
+      "description": "Data-scaling experiment. Resume v2 adapter, train 1 more epoch on 5 gold corpora (AAEC newly added).",
+      "training": {
+        "base_model": "Qwen/Qwen2.5-1.5B-Instruct",
+        "method": "LoRA r=16, continual from v2 adapter",
+        "trainable_params_m": 4.4,
+        "train_records": 1823,
+        "domains": ["AbstRCT", "Microtext", "CDCP", "PERSPECTRUM", "AAEC"],
+        "new_domain": "AAEC (402 essays / ~6000 components)",
+        "epochs": 1,
+        "wall_clock_hours": 5.5,
+        "hardware": "GTX 1080 Ti",
+        "resume_from": "phase2_student_beta_qwen1.5b_lora",
+        "config": "configs/phase2_beta_qwen1.5b_lora_v3.yaml"
+      },
+      "parser_level_eval": {
+        "cap_per_domain": 50,
+        "avg_component_f1": 0.229,
+        "per_domain": {
+          "microtext":  {"n": 11, "component_f1": 0.414, "relation_f1": 0.000, "empty_pct": 0,  "claim_f1": 0.515, "premise_f1": 0.727},
+          "cdcp":       {"n": 50, "component_f1": 0.219, "relation_f1": 0.000, "empty_pct": 14, "claim_f1": 0.507, "premise_f1": 0.151},
+          "abstrct":    {"n": 50, "component_f1": 0.249, "relation_f1": 0.103, "empty_pct": 50, "claim_f1": 0.352, "premise_f1": 0.318},
+          "perspectrum": {"n": 50, "component_f1": 0.034, "relation_f1": 0.000, "empty_pct": 92, "claim_f1": 0.063, "premise_f1": 0.039}
+        }
+      },
+      "phase1_integration_liararg": {
+        "ran": false,
+        "partial_parse_attempt": {
+          "rows_attempted": 64,
+          "empty_pct": 83,
+          "sample_real_parse_issues": "fragments like 'is not clear' as claim text",
+          "verdict": "domain transfer failure; killed to save Mac compute"
+        },
+        "reason": "Small distilled student doesn't recover cross-domain transfer ability of large LLMs."
+      },
+      "adapter_location_server": "~/argument-aware-rag/phase2_student_beta_qwen1.5b_lora_v3/"
+    },
+    {
+      "id": "phase2_beta_v4",
+      "name": "Phase 2-β v4 (planned): fresh adapter, gold + LIARArg silver",
+      "description": "Test of task-specific distillation. Fresh Qwen-1.5B + LoRA on 5 gold corpora plus LIARArg train silver-labeled by gpt-oss-120b.",
+      "training": {
+        "base_model": "Qwen/Qwen2.5-1.5B-Instruct",
+        "method": "LoRA r=16, fresh adapter",
+        "train_records_expected": "1823 gold + 2123 silver = 3946",
+        "epochs_expected": 3,
+        "wall_clock_hours_estimated": 15,
+        "config_pending": true
+      },
+      "expected_outcome": "LIARArg empty rate <30%, Phase 1 integration F1 0.20-0.24 range, somewhere between v3 (worse) and Phase 2-α (0.254). Tests whether small distilled students match cloud LLMs given teacher supervision."
+    }
+  ]
+}
