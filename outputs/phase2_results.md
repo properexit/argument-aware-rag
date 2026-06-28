@@ -97,6 +97,91 @@ outputs/phase2_results.json                machine-readable companion
 
 ---
 
+## Metric semantics (important methodology notes)
+
+The numbers in this registry come from **two different metrics measuring
+two different things**. They are not directly comparable as numbers.
+
+### Parser-F1 (used for v1 = 0.108, v2 = 0.219, v3 = 0.229)
+
+Component-level **span-extraction** quality, computed by `evaluate_corpus()`
+in `src/phase2/evaluate.py`:
+
+- For each held-out test record from a *training* corpus (Microtext, CDCP,
+  AbstRCT, PERSPECTRUM, AAEC) we compare the predicted `ArgStructureDict`
+  to the gold `ArgStructureDict`.
+- Component matching uses **token-overlap** between predicted and gold
+  spans at threshold ≥ 0.5, greedy 1-1 alignment.
+- F1 averaged across component kinds (claim, premise, citation), then
+  across records.
+- Eval set: held-out portions of training corpora — measures **in-domain
+  parsing quality**, not Phase 1 task performance.
+
+### Integration-F1 (used for Phase 2-α = 0.254, Phase 1 gold = 0.422, flat-RAG = 0.114)
+
+End-to-end Phase 1 pipeline **classification accuracy** on the LIARArg
+fact-checking task, computed by `compute_metrics()` in `src/evaluate.py`:
+
+- For each LIARArg test row, the parser produces an `ArgStructure` from
+  the article text.
+- Phase 1 uses that structure to drive role-targeted retrieval + a
+  Qwen-14B verifier outputs a predicted **truth class**, one of:
+  True / Mostly-true / Half-true / Barely-true / False / Pants-fire.
+- F1 = 6-way macro-F1 between predicted classes and gold classes.
+- This is a **6-way text classification metric**, not a span-extraction
+  metric.
+
+### The two "golds" in LIARArg
+
+Critical distinction for any Phase 2 writeup. LIARArg test rows contain
+**two separate gold fields**:
+
+| Field | What it is | Paraphrastic? | Used by us for |
+|---|---|---|---|
+| `label` | One of 6 truth classes (True/Mostly-true/.../Pants-fire) | No — it's a class index | **Evaluating** integration-F1 |
+| `claim_texts`, `premise_texts`, `citation_texts`, `*_relations` | Argument structure annotation | **Yes — annotators rewrote in their own words; the gold claim text doesn't appear verbatim in `full_text`** | Not used (training on this fails) |
+
+**Why this matters:**
+
+- **Training on `claim_texts`/etc.** teaches a parser to *invent* claim
+  text, since the gold doesn't appear in the input. This conflicts with
+  the extractive task our other 5 corpora train (Day 2's Flan-T5 collapse
+  confirmed this).
+- **Evaluating against `label`** is schema-agnostic — it's a class
+  prediction, not a text comparison. Any parser that drives Phase 1
+  toward the correct truth class scores high integration-F1.
+- This is why **Phase 2-α's 0.254 is methodologically valid** despite
+  LIARArg's paraphrastic argument-structure annotations: the evaluation
+  uses the truth class, not the paraphrased text.
+- This is also why **v4 silver matters**: gpt-oss-120b reads `full_text`
+  and produces *extractive* labels (spans copied from the input). Training
+  on those is schema-consistent with the other 5 corpora, while training
+  on LIARArg's paraphrastic gold is not.
+
+### Comparing parser-F1 to integration-F1
+
+You **cannot** read v3's 0.229 parser-F1 as predicting an integration-F1
+above or below Phase 2-α's 0.254. They are not the same metric. To make
+them properly comparable, we would need either:
+
+1. **Parser-F1 for gpt-oss-120b** on the same in-domain test sets (not run;
+   would take ~30 min on Cerebras).
+2. **Integration-F1 for v1/v2/v3 on LIARArg** (not run because v1 and v3
+   LIARArg-parse attempts hit 62%/83% empty rates, suggesting integration
+   F1 close to flat-RAG's 0.114 — not worth ~17h Mac compute on a known
+   poor signal).
+
+The numbers tell a partial but coherent story:
+- **In-domain:** v3 hits ~0.23 parser-F1, ~½ what gold extraction would
+  give on these corpora (~0.5–0.7 range).
+- **Cross-task (Phase 2-α):** A large general-purpose LLM as parser
+  closes 45% of the gap between flat-RAG (0.114) and gold-parser (0.422),
+  validating the architecture.
+- **Cross-domain transfer (Phase 2-β-v3 on LIARArg):** 83% empty rate —
+  small distilled students do not recover the breadth of large LLMs.
+
+---
+
 ## What's still to do (if pursuing v4)
 
 1. **Sample LIARArg train articles** (2123 rows), feed through gpt-oss-120b
