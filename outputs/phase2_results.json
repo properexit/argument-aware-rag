@@ -167,6 +167,28 @@
       "adapter_location_server": "~/argument-aware-rag/phase2_student_beta_qwen1.5b_lora_v3/"
     },
     {
+      "id": "ablation_direct_from_structure",
+      "name": "Day 1 ablation: direct-from-parsed-structure (no retrieval)",
+      "description": "Skip Phase 1's retriever+reranker entirely. For each LIARArg test row, take Phase 2-α's parser predictions, group premises by support/attack role, feed directly to the Ollama Qwen-14B verifier. Isolates the parser's contribution from retrieval's.",
+      "parser": "Phase 2-α (gpt-oss-120b predictions reused, no re-parsing)",
+      "verifier": "Ollama qwen2.5:14b-instruct (same as Phase 2-α)",
+      "test_set": "LIARArg stratified n=425",
+      "phase1_integration_liararg": {
+        "macro_f1_6way": 0.135,
+        "accuracy_6way": 0.259,
+        "within_1_accuracy": 0.638,
+        "macro_f1_3way": 0.426
+      },
+      "comparison": {
+        "phase2_alpha_with_retrieval_6w_f1": 0.254,
+        "flat_rag_6w_f1": 0.114,
+        "delta_over_flat_rag": 0.021,
+        "retrieval_contribution_6w_f1": 0.119,
+        "parser_spans_contribution_6w_f1": 0.021,
+        "interpretation": "Retrieval contributes ~5x more F1 gain than parser spans alone. Phase 1 architecture's primary value is parser-driven retrieval, not parser-as-evidence. Parser knows truth direction (within-1 0.638) but not degree (6-way 0.135)."
+      }
+    },
+    {
       "id": "phase2_beta_v4",
       "name": "Phase 2-β v4 (planned): fresh adapter, gold + LIARArg silver",
       "description": "Test of task-specific distillation. Fresh Qwen-1.5B + LoRA on 5 gold corpora plus LIARArg train silver-labeled by gpt-oss-120b.",

@@ -144,6 +144,56 @@ outputs/phase2_results.json                machine-readable companion
 
 ---
 
+## Day 1 ablation: direct-from-parsed-structure (skip retrieval)
+
+Decomposes Phase 1's pipeline contributions. For each LIARArg test row
+(n=425), takes Phase 2-α's parser predictions (gpt-oss-120b spans),
+groups premises by support/attack role, feeds directly to the Ollama
+Qwen-14B verifier. No retrieval, no reranking.
+
+### Result
+
+| Variant | 6-way F1 | within-1 | 3-way F1 |
+|---|---|---|---|
+| Phase 1 gold-parser + retrieval | **0.422** | 0.795 | — |
+| Phase 2-α (gpt-oss-120b parser + retrieval) | **0.254** | 0.616 | 0.461 |
+| **Direct-from-structure (NO retrieval)** | **0.135** | **0.638** | **0.426** |
+| flat-RAG (no parser at all) | 0.114 | 0.532 | 0.247 |
+
+### Decomposition
+
+```
+Parser spans alone (no retrieval):   0.135  =  +0.021 over flat-RAG
++ Retrieval (Phase 2-α pipeline):    0.254  =  +0.119 from retrieval
+```
+
+**Retrieval contributes ~5× more F1 gain than the parser's spans
+alone.** The arg-aware advantage on LIARArg is primarily a retrieval
+improvement; the parser's role is principally to drive better
+retrieval queries rather than to provide evidence directly.
+
+### Wrinkles
+
+- **within-1 accuracy is HIGHER without retrieval (0.638) than with
+  (0.616).** The parser's structure reliably indicates truth
+  *direction*; retrieval is needed for fine-grained 6-way class
+  discrimination.
+- **3-way F1 (0.426) is genuinely strong for "no retrieval".** Coarse
+  Truthy/Indeterminate/Falsey classification works reasonably from the
+  parser alone. Precision on the 6-class scale requires retrieved
+  evidence.
+
+### Implications for Phase 2-β and open-world deployment
+
+The v3 student's target shifts: instead of "match Phase 2-α's parser
+quality," it's "produce structure good enough to drive useful retrieval
+queries." This is more achievable — v3's 0.229 in-domain comp-F1 may
+suffice if the resulting queries are reasonable. The open-world demo
+(parse-on-retrieval over Wikipedia) becomes the natural follow-up
+to validate this.
+
+---
+
 ## Metric semantics (important methodology notes)
 
 The numbers in this registry come from **two different metrics measuring
