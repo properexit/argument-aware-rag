@@ -53,13 +53,60 @@ save ~17 hours of Mac compute on a known-bad signal.
 
 ## Per-domain breakdown (parser-level eval, capped 50 records/domain except Microtext n=11)
 
-| Domain | v1 comp-F1 | v2 comp-F1 | v3 comp-F1 | v1 empty | v2 empty | v3 empty |
-|---|---|---|---|---|---|---|
-| Microtext | 0.116 | 0.393 | **0.414** | 0% | 0% | 0% |
-| CDCP | 0.169 | 0.202 | **0.219** | 13% | 12% | 14% |
-| AbstRCT | 0.108 | 0.223 | **0.249** | 75% | 50% | 50% |
-| PERSPECTRUM | 0.038 | 0.056 | **0.034** | 91% | 88% | 92% |
-| **Average** | **0.108** | **0.219** | **0.229** | — | — | — |
+| Domain | v1 comp-F1 | v2 comp-F1 | v3 comp-F1 | **Phase 2-α comp-F1** (gpt-oss-120b) | v3 / teacher |
+|---|---|---|---|---|---|
+| Microtext | 0.116 | 0.393 | **0.414** | **0.559** | **74%** |
+| CDCP | 0.169 | 0.202 | **0.219** | **0.277** | **79%** |
+| AbstRCT | 0.108 | 0.223 | **0.249** | **0.420** | **59%** |
+| PERSPECTRUM | 0.038 | 0.056 | **0.034** | **0.075** | **45%** |
+| **Average** | **0.108** | **0.219** | **0.229** | **0.333** | **69%** |
+
+### Empty rates per domain
+
+| Domain | v1 empty | v2 empty | v3 empty | Phase 2-α empty |
+|---|---|---|---|---|
+| Microtext | 0% | 0% | 0% | 0% |
+| CDCP | 13% | 12% | 14% | 6% |
+| AbstRCT | 75% | 50% | 50% | 6% |
+| PERSPECTRUM | 91% | 88% | 92% | 58% |
+
+### What Phase 2-α's in-domain numbers tell us
+
+The gpt-oss-120b teacher numbers establish a **comparable upper bound** for
+parser-F1 on the same evaluation methodology. With both teacher and student
+measured on the same test sets at the same threshold, the relationships
+become meaningful:
+
+1. **v3 captures 69% of teacher quality on average.** A 1.5B distilled
+   student on consumer-tier hardware matches ~70% of a 120B cloud model's
+   extractive parsing — within the ballpark of standard knowledge-distillation
+   results (typically 60-90% retention).
+
+2. **The retention ratio varies by domain.** CDCP (79%) and Microtext (74%)
+   are easiest to distill — short, formulaic texts where structural patterns
+   transfer cleanly. AbstRCT (59%) is harder — long medical abstracts where
+   the teacher's general-knowledge advantage matters most.
+
+3. **PERSPECTRUM is hard for everyone.** Even gpt-oss-120b only manages
+   0.075 (vs 0.034 for v3). This isn't a v3 failure — it's a domain that
+   defeats extractive parsing as a paradigm. The concatenated-debate
+   format (claim + perspectives + evidence joined as prose) doesn't match
+   how extractive parsers identify argumentative segments.
+
+4. **AbstRCT empty rate is the most telling diagnostic.** Teacher gets 6%
+   empty, v3 gets 50%. The gap is almost entirely about coverage — when
+   the student parses AbstRCT, it produces an empty fallback half the
+   time. When it does parse, quality is reasonable. So the engineering
+   target for v4 is reducing the no-output rate, not improving the
+   extractions that already happen.
+
+5. **The Phase 1 integration gap is NOT explained by parser quality alone.**
+   v3 retains 69% of teacher parsing quality in-domain, but on LIARArg
+   integration the v3 student's empty rate was 83% (vs teacher's effective
+   0% on the Phase 2-α LIARArg parse). This means **cross-domain transfer
+   failure is mostly orthogonal to in-domain parsing capability** — a
+   parser can be 69% as good as the teacher in-domain and still produce
+   garbage on unfamiliar text styles.
 
 ---
 

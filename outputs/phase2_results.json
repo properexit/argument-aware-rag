@@ -33,6 +33,25 @@
         "training": null,
         "notes": "Zero-shot. Mixed parser sources due to API limits: 65 rows from Llama-3.3-70B (HF Inference), 320 from gpt-oss-120b (Cerebras), 40 fallback. 99.5% real parse rate after backfill+retry."
       },
+      "parser_level_eval": {
+        "cap_per_domain": 50,
+        "method": "Same in-domain test sets as v1/v2/v3, same evaluate_corpus() threshold 0.5, single Cerebras key, sequential.",
+        "avg_component_f1": 0.333,
+        "per_domain": {
+          "microtext":  {"n": 11, "component_f1": 0.559, "relation_f1": 0.447, "empty_pct": 0,  "claim_f1": null, "premise_f1": null},
+          "cdcp":       {"n": 50, "component_f1": 0.277, "relation_f1": 0.043, "empty_pct": 6,  "claim_f1": null, "premise_f1": null},
+          "abstrct":    {"n": 50, "component_f1": 0.420, "relation_f1": 0.424, "empty_pct": 6,  "claim_f1": null, "premise_f1": null},
+          "perspectrum": {"n": 50, "component_f1": 0.075, "relation_f1": 0.053, "empty_pct": 58, "claim_f1": null, "premise_f1": null}
+        },
+        "vs_v3_retention_ratio": {
+          "microtext": 0.74,
+          "cdcp": 0.79,
+          "abstrct": 0.59,
+          "perspectrum": 0.45,
+          "average": 0.69,
+          "interpretation": "Distilled v3 student retains 69% of teacher parsing quality on average. Highest on CDCP (formulaic), lowest on PERSPECTRUM (which defeats extractive parsing for both models)."
+        }
+      },
       "phase1_integration_liararg": {
         "test_set": "stratified n=425",
         "macro_f1_6way": 0.254,
