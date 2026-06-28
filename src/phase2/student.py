@@ -233,32 +233,50 @@ class HFTrainer(StudentTrainerBase):
         # Phase 2-β-v2: train low-rank adapters on attention projections
         # instead of the full model. Cuts gradient + optimizer memory to
         # near-zero, so Qwen-1.5B+ fits on 11 GB Pascal.
+        # Phase 2-β-v3: when resume_from_adapter is set, load that adapter
+        # and continue training instead of starting fresh — saves ~10 hours.
         if self.cfg.use_lora:
             try:
-                from peft import LoraConfig, get_peft_model, TaskType
+                from peft import LoraConfig, get_peft_model, TaskType, PeftModel
             except ImportError as e:
                 raise RuntimeError("pip install peft for LoRA support") from e
-            target_modules = [m.strip() for m in
-                              self.cfg.lora_target_modules.split(",")
-                              if m.strip()]
-            lora_cfg = LoraConfig(
-                r=self.cfg.lora_r,
-                lora_alpha=self.cfg.lora_alpha,
-                lora_dropout=self.cfg.lora_dropout,
-                target_modules=target_modules,
-                bias="none",
-                task_type=TaskType.SEQ_2_SEQ_LM if is_seq2seq
-                          else TaskType.CAUSAL_LM,
-            )
-            model = get_peft_model(model, lora_cfg)
+
+            if self.cfg.resume_from_adapter:
+                resume_path = Path(self.cfg.resume_from_adapter)
+                if not (resume_path / "adapter_config.json").exists():
+                    raise FileNotFoundError(
+                        f"resume_from_adapter set but no adapter_config.json at "
+                        f"{resume_path}")
+                # is_trainable=True so the loaded adapter weights remain
+                # learnable (default is to freeze them for inference)
+                model = PeftModel.from_pretrained(model, str(resume_path),
+                                                   is_trainable=True)
+                print(f"[student:hf:lora] RESUMING from adapter at "
+                      f"{resume_path} (Phase 2-β-v3 continual training)")
+            else:
+                target_modules = [m.strip() for m in
+                                  self.cfg.lora_target_modules.split(",")
+                                  if m.strip()]
+                lora_cfg = LoraConfig(
+                    r=self.cfg.lora_r,
+                    lora_alpha=self.cfg.lora_alpha,
+                    lora_dropout=self.cfg.lora_dropout,
+                    target_modules=target_modules,
+                    bias="none",
+                    task_type=TaskType.SEQ_2_SEQ_LM if is_seq2seq
+                              else TaskType.CAUSAL_LM,
+                )
+                model = get_peft_model(model, lora_cfg)
+                print(f"[student:hf:lora] FRESH adapter "
+                      f"(r={self.cfg.lora_r}, targets={target_modules})")
+
             trainable, total = 0, 0
             for p in model.parameters():
                 total += p.numel()
                 if p.requires_grad:
                     trainable += p.numel()
-            print(f"[student:hf:lora] r={self.cfg.lora_r} "
-                  f"trainable={trainable/1e6:.1f}M / {total/1e6:.1f}M "
-                  f"({100*trainable/total:.2f}%)  targets={target_modules}")
+            print(f"[student:hf:lora] trainable={trainable/1e6:.1f}M / "
+                  f"{total/1e6:.1f}M ({100*trainable/total:.2f}%)")
         if self.cfg.gradient_checkpointing:
             model.gradient_checkpointing_enable()
             if hasattr(model.config, "use_cache"):

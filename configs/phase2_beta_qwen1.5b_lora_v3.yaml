@@ -1,0 +1,58 @@
+# Phase 2-β v3: continual train from v2 adapter on the expanded 5-source
+# gold pool (AAEC newly added: 329 train / 31 val / 42 test = 402 essays).
+#
+# Hypothesis: v2's 0.219 average comp-F1 was driven mostly by scaling
+# (0.5B → 1.5B + LoRA). Adding AAEC's prose-style essays (similar to
+# LIARArg articles' length and style) should especially help on long
+# inputs and PERSPECTRUM's debate text.
+#
+# Cost-aware choice: resume from v2 adapter instead of training from
+# scratch. v2 already learned base parsing behavior over 3 epochs;
+# v3 just teaches it the additional AAEC data + reinforces existing
+# learning over 1 more epoch. Saves ~10 hours.
+#
+# Expected wall-clock: ~5-6h on GTX 1080 Ti (1 epoch over ~1823 train).
+run_name: phase2_beta_qwen1.5b_lora_v3
+
+dataset:
+  liararg_path: ""
+  aaec_path: ""
+  abstrct_path: ""
+  aries_clean_path: ""
+  silver_sources: []
+  samples_per_silver_source: 0
+  val_frac: 0.10
+  test_frac: 0.10
+  seed: 42
+  output_dir: phase2_data/unified
+
+teacher:
+  backend: dummy
+  model: ""
+
+student:
+  backend: hf
+  base_model: Qwen/Qwen2.5-1.5B-Instruct
+  max_input_len: 1024
+  max_target_len: 384
+  batch_size: 1
+  grad_accum: 32                   # effective batch 32, same as v2
+  learning_rate: 0.0001            # ½ of v2's LR — gentler continual update
+  weight_decay: 0.01
+  warmup_ratio: 0.05               # minimal warmup since we're resuming
+  num_epochs: 1                    # just one more pass
+  fp16: true
+  gradient_checkpointing: true
+  optim: adafactor
+  seed: 42
+  eval_every_steps: 0
+  # ── LoRA ──
+  use_lora: true
+  lora_r: 16
+  lora_alpha: 32
+  lora_dropout: 0.05
+  lora_target_modules: "q_proj,k_proj,v_proj,o_proj"
+  # ── Resume from v2 ──
+  resume_from_adapter: phase2_student_beta_qwen1.5b_lora
+
+student_output_dir: phase2_student_beta_qwen1.5b_lora_v3

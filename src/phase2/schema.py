@@ -117,6 +117,10 @@ class StudentConfig:
     lora_alpha: int = 32
     lora_dropout: float = 0.05
     lora_target_modules: str = "q_proj,k_proj,v_proj,o_proj"
+    # When set, load this adapter and continue training instead of starting
+    # fresh. Used for Phase 2-β-v3: resume from v2's adapter, train 1 more
+    # epoch on the expanded 5-source gold pool. Saves ~10 hours vs from-scratch.
+    resume_from_adapter: str = ""
 
 
 @dataclass
