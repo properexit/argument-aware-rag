@@ -648,8 +648,19 @@ class CerebrasTeacher(AnnotatorBase):
                 )
                 self._last_call = time.time()
                 self._n_today += 1
-                raw = resp.choices[0].message.content or ""
-                return _extract_json(raw), _extract_cot(raw)
+                msg = resp.choices[0].message
+                raw = msg.content or ""
+                # Prefer the model's structured reasoning field (gpt-oss-120b
+                # puts CoT in message.reasoning, not in <think> tags in
+                # content). Falls back to <think>...</think> extraction from
+                # content for models that embed CoT inline (Groq Llama,
+                # HF Inference, etc.). This is the CoT-aware Phase 2-β-v4
+                # silver-generation path — student will learn to produce
+                # reasoning + JSON instead of just JSON.
+                reasoning = (getattr(msg, "reasoning", None)
+                             or getattr(msg, "reasoning_content", None)
+                             or _extract_cot(raw))
+                return _extract_json(raw), reasoning or ""
             except Exception as e:
                 msg = str(e).lower()
                 if "402" in msg or "payment" in msg or "insufficient" in msg:
