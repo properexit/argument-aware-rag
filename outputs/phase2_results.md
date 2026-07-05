@@ -5,6 +5,26 @@ lands. Detailed per-domain breakdowns in `phase2_results.json`.
 
 ---
 
+## HEADLINE: Phase 2-β-v4 matches 85-99% of the 120B cloud LLM
+
+**A Qwen-1.5B distilled student, trained on 5 gold corpora + LIARArg
+silver (with CoT reasoning), captures 85% of Phase 2-α's 6-way F1 and
+essentially TIES it on coarser metrics — while running locally on
+consumer-tier hardware instead of a cloud API.**
+
+| Variant | 6-way F1 | 3-way F1 | within-1 |
+|---|---|---|---|
+| Phase 1 gold-parser (oracle) | 0.422 | — | 0.795 |
+| Phase 2-α (gpt-oss-120b, cloud) | 0.254 | 0.461 | 0.616 |
+| **Phase 2-β-v4 (Qwen-1.5B distilled)** | **0.217** | **0.457** | **0.605** |
+| flat-RAG (no parser) | 0.114 | 0.248 | 0.533 |
+
+Gap closed vs flat-RAG:
+- Phase 2-α closes 46% of the gold-parser gap using a 120B cloud LLM
+- **Phase 2-β-v4 closes 33%** (73% of Phase 2-α's advantage preserved through distillation)
+
+---
+
 ## Headline numbers
 
 | Variant | Approach | Adapter / model | comp-F1 (avg, in-domain) | LIARArg integration F1 (6-way) | Status |

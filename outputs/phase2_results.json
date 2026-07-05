@@ -190,17 +190,71 @@
     },
     {
       "id": "phase2_beta_v4",
-      "name": "Phase 2-β v4 (planned): fresh adapter, gold + LIARArg silver",
-      "description": "Test of task-specific distillation. Fresh Qwen-1.5B + LoRA on 5 gold corpora plus LIARArg train silver-labeled by gpt-oss-120b.",
+      "name": "Phase 2-β v4: Qwen-1.5B distilled with gold + LIARArg silver + CoT",
+      "description": "Fresh Qwen-1.5B + LoRA on 5 gold corpora plus LIARArg train silver-labeled by gpt-oss-120b. Silver records included CoT reasoning traces from gpt-oss-120b, and the training format string _format_target() automatically included <think>{reasoning}</think>{json} when reasoning was present — so v4 accidentally became a full CoT-aware student.",
       "training": {
         "base_model": "Qwen/Qwen2.5-1.5B-Instruct",
-        "method": "LoRA r=16, fresh adapter",
-        "train_records_expected": "1823 gold + 2123 silver = 3946",
-        "epochs_expected": 3,
-        "wall_clock_hours_estimated": 15,
-        "config_pending": true
+        "method": "LoRA r=16, fresh adapter (not continual)",
+        "trainable_params_m": 4.4,
+        "train_records": 3946,
+        "domains_gold": ["AbstRCT", "Microtext", "CDCP", "PERSPECTRUM", "AAEC"],
+        "silver_source": "gpt-oss-120b via Cerebras on 2123 LIARArg train articles",
+        "silver_empty_rate_pct": 4.9,
+        "silver_avg_reasoning_chars": 4099,
+        "epochs": 3,
+        "wall_clock_hours": 29,
+        "hardware": "GTX 1080 Ti",
+        "config": "configs/phase2_beta_qwen1.5b_lora_v4.yaml"
       },
-      "expected_outcome": "LIARArg empty rate <30%, Phase 1 integration F1 0.20-0.24 range, somewhere between v3 (worse) and Phase 2-α (0.254). Tests whether small distilled students match cloud LLMs given teacher supervision."
+      "parser_level_eval_full_uncapped": {
+        "cap_per_domain": 0,
+        "avg_component_f1": 0.192,
+        "per_domain": {
+          "microtext":  {"n": 11,  "component_f1": 0.379, "empty_pct": 0},
+          "cdcp":       {"n": 150, "component_f1": 0.186, "empty_pct": 21},
+          "abstrct":    {"n": 300, "component_f1": 0.175, "empty_pct": 59},
+          "perspectrum": {"n": 227, "component_f1": 0.027, "empty_pct": 91}
+        },
+        "note": "v4 in-domain slightly regressed vs v3 (0.207) because v3 was continual from v2 (effectively 4 epochs of learning) while v4 is fresh 3 epochs. This regression is expected and the meaningful comparison is on cross-domain LIARArg integration."
+      },
+      "liararg_parse": {
+        "n": 425,
+        "empty_pct": 23,
+        "vs_v3_liararg_empty_pct": 83,
+        "improvement": "Dropped from 83% empty (v3) to 23% empty (v4). Silver + CoT successfully fixed the cross-domain transfer failure."
+      },
+      "phase1_integration_liararg": {
+        "test_set": "stratified n=425",
+        "macro_f1_6way": 0.217,
+        "accuracy_6way": 0.249,
+        "within_1_accuracy": 0.605,
+        "mae_on_scale": 1.468,
+        "macro_f1_3way": 0.457,
+        "accuracy_3way": 0.480,
+        "flat_rag_baseline_6way_f1": 0.114,
+        "flat_rag_baseline_3way_f1": 0.248,
+        "flat_rag_baseline_within_1": 0.533,
+        "comparison_vs_phase2_alpha": {
+          "phase2_alpha_6way_f1": 0.254,
+          "phase2_alpha_3way_f1": 0.461,
+          "phase2_alpha_within_1": 0.616,
+          "delta_6way": -0.037,
+          "delta_3way": -0.004,
+          "delta_within_1": -0.011,
+          "retention_6way_pct": 85,
+          "retention_3way_pct": 99,
+          "retention_within_1_pct": 98
+        },
+        "gap_closed_vs_flat_rag": {
+          "delta_6way": 0.103,
+          "phase2_alpha_delta": 0.140,
+          "gap_closure_pct": 33,
+          "phase2_alpha_gap_closure_pct": 46,
+          "distillation_advantage_retention_pct": 73
+        }
+      },
+      "adapter_location_server": "~/argument-aware-rag/phase2_student_beta_qwen1.5b_lora_v4/",
+      "notes": "Headline result: a Qwen-1.5B distilled student captures 85% of the 120B cloud LLM's 6-way F1, essentially TIES it on 3-way F1 (99% retention) and within-1 (98% retention). The architecture claim from Phase 2-α is preserved end-to-end through distillation into a locally-runnable model."
     }
   ]
 }
