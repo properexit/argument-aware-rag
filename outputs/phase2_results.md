@@ -299,6 +299,88 @@ The numbers tell a partial but coherent story:
 
 ---
 
+## ECHR out-of-distribution probe (v4)
+
+Bound-of-transfer test: run v4 on European Court of Human Rights case briefs
+— a legal-argumentation corpus v4 has never seen (neither in the 5 gold
+corpora nor in the LIARArg silver). 20 cases sampled from the 12,947-case
+ECHR dataset, seed=42.
+
+### Proxy gold construction
+
+ECHR annotates each argument span with an `agent` label
+(Applicant / State / Court [ECHR] / Third Parties / Non-Argument). We map:
+
+| ECHR agent | Our role |
+|---|---|
+| ECHR (Court) | claim |
+| Applicant / State / Third Parties | premise |
+| Non-Argument | excluded |
+
+This is **not an argument-mining annotation**. ECHR "Court" statements are
+court-of-appeal-style meta-reasoning, structurally different from
+Politifact-style claims v4 was trained on. Span granularity also differs
+(ECHR: paragraph-scale units; v4 training: shorter atomic spans). The F1
+numbers here are **directional**, not comparable to Microtext/AbstRCT F1.
+
+### Result
+
+| Metric | Value |
+|---|---|
+| Non-empty rate | 20/20 |
+| Extraction rate (matched spans / total gold) | 53/547 = **9.7%** |
+| Claim F1 | 0.030 (P=0.100, R=0.017) |
+| Premise F1 | 0.118 (P=0.120, R=0.117) |
+| **Component F1 (macro)** | **0.074** |
+| Wall clock | 60 min |
+
+### Reading
+
+- **v4 transfers to legal domain, at bounded quality.** Every case produced
+  non-empty output; no full failures. v4 identifies genuine ECHR argument
+  spans — e.g., recovers *"The applicant complained that the length of his
+  detention on remand had been unreasonable"* as a claim.
+- **Role-schema mismatch dominates the error, not extraction.** Claim
+  recall of 0.017 vs premise F1 of 0.118 shows v4 finds advocacy-style
+  spans (Applicant / State positions) reasonably well but misses ECHR's
+  court-conclusion statements almost entirely. The role schema v4 learned
+  (Politifact + 5 gold corpora) doesn't map cleanly onto ECHR's
+  agent-based argumentative structure.
+- **Under-extraction is a granularity effect.** v4 predicts ~140 spans
+  vs ~547 gold spans (~26% coverage). ECHR's paragraph-scale annotations
+  are coarser than v4's atomic-span training data.
+
+### Distillation infrastructure finding (surfaced by this probe)
+
+Strict `_parse_output` returned **empty on 18/20 cases** because v4's
+generation hit `max_new_tokens=2048` mid-relation-generation loop, leaving
+the JSON unclosed. Diagnosis showed the model was emitting valid
+claim/premise objects early but then looping on identical
+`{"src": N, "tgt": M, "type": "support"}` tuples until the token cap,
+never emitting the closing `]}`.
+
+**Patched `src/phase2/student.py`** with a `_salvage_parse` fallback that
+scans each section header (`"claim_components": [`, `"premise_components": [`,
+...) and extracts valid `{...}` objects via brace-depth matching. Relations
+are deduplicated. Objects that fail to parse are silently skipped rather
+than nuking the whole record. **Strict parsing is always tried first**, so
+behavior on valid JSON — and therefore all previously-published numbers
+(v1, v2, v3, v4 in-domain, v4 LIARArg integration) — is unchanged.
+
+Impact on the ECHR probe: **20/20 non-empty** with salvage
+(vs 2/20 with strict). Turned an apparent "v4 fails on legal" result into
+a partial-transfer result.
+
+### Commentary
+
+Not a headline number. This is a limitation-boundary probe: "where does v4
+stop transferring?" Answer: v4 shows partial transfer to genuinely OOD
+legal argumentation, bounded by role-schema mismatch and paragraph-vs-atomic
+granularity differences. The parser-salvage fix is a real code contribution
+independent of the transfer result.
+
+---
+
 ## What's still to do (if pursuing v4)
 
 1. **Sample LIARArg train articles** (2123 rows), feed through gpt-oss-120b

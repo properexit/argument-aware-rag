@@ -53,18 +53,24 @@ def _parse_output(raw: str) -> tuple[ArgStructureDict, str]:
     reasoning = cot_m.group(1).strip() if cot_m else ""
     cleaned = re.sub(r"<think>.*?</think>", "", raw, flags=re.DOTALL).strip()
     json_m = re.search(r"\{.*\}", cleaned, flags=re.DOTALL)
-    if not json_m:
-        return _empty(), reasoning
-    try:
-        parsed = json.loads(json_m.group())
-    except json.JSONDecodeError:
-        return _empty(), reasoning
-    return {
-        "claim_components":    parsed.get("claim_components",    []) or [],
-        "premise_components":  parsed.get("premise_components",  []) or [],
-        "citation_components": parsed.get("citation_components", []) or [],
-        "relations":           parsed.get("relations",           []) or [],
-    }, reasoning
+    if json_m:
+        try:
+            parsed = json.loads(json_m.group())
+            return {
+                "claim_components":    parsed.get("claim_components",    []) or [],
+                "premise_components":  parsed.get("premise_components",  []) or [],
+                "citation_components": parsed.get("citation_components", []) or [],
+                "relations":           parsed.get("relations",           []) or [],
+            }, reasoning
+        except json.JSONDecodeError:
+            pass  # fall through to salvage
+    # Salvage: strict JSON parsing failed or no closing brace was emitted.
+    # Common cause is the model hitting max_new_tokens mid-relation-generation
+    # loop on long-input cases (observed on ECHR legal-domain probe), which
+    # leaves the JSON unclosed. Scan each section for valid {...} objects
+    # independently so we still recover the claim/premise spans that were
+    # emitted before the loop pathology kicked in.
+    return _salvage_parse(cleaned), reasoning
 
 
 def _empty() -> ArgStructureDict:
@@ -74,6 +80,67 @@ def _empty() -> ArgStructureDict:
         "citation_components": [],
         "relations": [],
     }
+
+
+_SALVAGE_SECTIONS = [
+    ("claim_components",    r'"claim_components"\s*:\s*\['),
+    ("premise_components",  r'"premise_components"\s*:\s*\['),
+    ("citation_components", r'"citation_components"\s*:\s*\['),
+    ("relations",           r'"relations"\s*:\s*\['),
+]
+
+
+def _salvage_parse(raw: str) -> ArgStructureDict:
+    """Lenient fallback for _parse_output.
+
+    Activates when strict JSON parsing fails (unclosed JSON, mid-relation
+    truncation, etc.). For each section header — "claim_components": [ ,
+    "premise_components": [ , ... — we scan forward and extract each valid
+    {...} object one at a time via brace-depth matching. Objects that fail
+    to parse are silently skipped rather than nuking the whole record.
+
+    Relations are deduplicated because the specific failure mode we observed
+    is the model looping on identical (src, tgt, type) tuples until it hits
+    the token cap. Without dedup those loops would inflate the relation
+    count.
+
+    Introduced after the ECHR domain-transfer probe (Phase 2-β-v4), where
+    2/20 cases produced valid JSON at max_target_len=2048 despite emitting
+    correct claim/premise spans early in generation.
+    """
+    out: ArgStructureDict = _empty()
+    for key, pat in _SALVAGE_SECTIONS:
+        m = re.search(pat, raw)
+        if not m:
+            continue
+        depth = 0
+        obj_start: int | None = None
+        for i in range(m.end(), len(raw)):
+            c = raw[i]
+            if c == "{":
+                if depth == 0:
+                    obj_start = i
+                depth += 1
+            elif c == "}":
+                depth -= 1
+                if depth == 0 and obj_start is not None:
+                    try:
+                        out[key].append(json.loads(raw[obj_start:i + 1]))
+                    except json.JSONDecodeError:
+                        pass
+                    obj_start = None
+            elif c == "]" and depth == 0:
+                break
+    # Dedupe relations to defuse the loop-until-cap pathology
+    seen: set = set()
+    uniq: list = []
+    for r in out["relations"]:
+        k = (r.get("src"), r.get("tgt"), r.get("type"))
+        if k not in seen:
+            seen.add(k)
+            uniq.append(r)
+    out["relations"] = uniq
+    return out
 
 
 # ────────────────────────────────────────────────────────────────────────────
