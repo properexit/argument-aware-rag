@@ -31,10 +31,8 @@ from typing import Iterable
 from .schema import ArgStructureDict, TeacherConfig, TrainRecord
 
 
-# ────────────────────────────────────────────────────────────────────────────
 # System prompt — adapted from the Wang-style prompt used in your friend's
 # prototype, with our Phase 1 schema (citations included, partials preserved).
-# ────────────────────────────────────────────────────────────────────────────
 
 SYSTEM_PROMPT = """You are an expert argument mining annotator.
 
@@ -111,9 +109,7 @@ def _empty_structure() -> ArgStructureDict:
     }
 
 
-# ────────────────────────────────────────────────────────────────────────────
 # Abstract base
-# ────────────────────────────────────────────────────────────────────────────
 
 class AnnotatorBase(abc.ABC):
     """Subclass and implement `annotate`."""
@@ -181,9 +177,7 @@ class AnnotatorBase(abc.ABC):
         return all_recs
 
 
-# ────────────────────────────────────────────────────────────────────────────
 # DummyTeacher — instant, no API
-# ────────────────────────────────────────────────────────────────────────────
 
 class DummyTeacher(AnnotatorBase):
     """Returns a fixed minimal structure. For smoke-testing the pipeline.
@@ -218,9 +212,7 @@ class DummyTeacher(AnnotatorBase):
         return structure, cot
 
 
-# ────────────────────────────────────────────────────────────────────────────
 # GroqTeacher — real implementation, free tier
-# ────────────────────────────────────────────────────────────────────────────
 
 class GroqTeacher(AnnotatorBase):
     """Llama-3.3-70B via Groq free tier. Rate-limit aware.
@@ -288,9 +280,7 @@ class GroqTeacher(AnnotatorBase):
         return _empty_structure(), "[teacher: max retries]"
 
 
-# ────────────────────────────────────────────────────────────────────────────
 # HFInferenceTeacher — HuggingFace Inference Providers (free tier)
-# ────────────────────────────────────────────────────────────────────────────
 
 class HFInferenceTeacher(AnnotatorBase):
     """Calls a model hosted via HuggingFace's Inference Providers
@@ -376,9 +366,7 @@ class HFInferenceTeacher(AnnotatorBase):
         return _empty_structure(), "[teacher: max retries]"
 
 
-# ────────────────────────────────────────────────────────────────────────────
 # LocalHFTeacher — runs a small/medium model on the local GPU
-# ────────────────────────────────────────────────────────────────────────────
 
 class LocalHFTeacher(AnnotatorBase):
     """Runs a HuggingFace causal LM locally — no API, no rate limit.
@@ -512,9 +500,7 @@ class LocalHFTeacher(AnnotatorBase):
             pass
 
 
-# ────────────────────────────────────────────────────────────────────────────
 # TogetherTeacher — Together AI's hosted Llama-70B (and others)
-# ────────────────────────────────────────────────────────────────────────────
 
 class TogetherTeacher(AnnotatorBase):
     """Llama-3.3-70B (or other open-weights) via Together AI's hosted API.
@@ -592,9 +578,7 @@ class TogetherTeacher(AnnotatorBase):
         return _empty_structure(), "[teacher: max retries]"
 
 
-# ────────────────────────────────────────────────────────────────────────────
 # CerebrasTeacher — Llama-70B via Cerebras Cloud (free tier, no card)
-# ────────────────────────────────────────────────────────────────────────────
 
 class CerebrasTeacher(AnnotatorBase):
     """Llama-3.3-70B via Cerebras Cloud's free tier.
@@ -681,9 +665,7 @@ class CerebrasTeacher(AnnotatorBase):
         return _empty_structure(), "[teacher: max retries]"
 
 
-# ────────────────────────────────────────────────────────────────────────────
 # Factory
-# ────────────────────────────────────────────────────────────────────────────
 
 def build_teacher(cfg: TeacherConfig) -> AnnotatorBase:
     if cfg.backend == "dummy":

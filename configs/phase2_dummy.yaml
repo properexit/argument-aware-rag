@@ -4,7 +4,7 @@
 run_name: phase2_dummy
 
 dataset:
-  # Leave source paths blank — assemble_corpus() will fall back to the
+  # Leave source paths blank -- assemble_corpus() will fall back to the
   # synthetic two-example corpus baked into src/phase2/dataset.py.
   aaec_path: ""
   abstrct_path: ""

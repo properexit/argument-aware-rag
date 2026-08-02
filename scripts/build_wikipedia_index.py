@@ -26,7 +26,7 @@ Typical run (1.5 days total wall-time)
 
     # 2. Run the existing pipeline against the new corpus (~12 hours)
     caffeinate -i python -u scripts/run_pipeline.py \\
-        --n 952 --data-dir data_liar \\
+        --n 952 --data-dir data/liar_splits \\
         --index-dir outputs/index_wikipedia \\
         --out-dir outputs/results_liar_wikipedia \\
         --verifier ollama --ollama-model qwen2.5:14b-instruct \\
@@ -57,9 +57,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 from src.retriever import HybridRetriever, Passage
 
 
-# ────────────────────────────────────────────────────────────────────────────
 # Topic filter — title-level keyword match
-# ────────────────────────────────────────────────────────────────────────────
 # Two categories: political-process terms (high-precision political articles)
 # and policy-domain terms (where LIAR claims actually land — economy, health,
 # immigration, etc.). Title is matched lowercase against any keyword.
@@ -94,9 +92,7 @@ def matches_topic(title: str) -> bool:
     return any(kw in t for kw in POLITICS_KEYWORDS)
 
 
-# ────────────────────────────────────────────────────────────────────────────
 # Paragraph extraction
-# ────────────────────────────────────────────────────────────────────────────
 _PARA_SPLIT = re.compile(r"\n\n+")
 # Skip these section headers and everything after — they're noise for retrieval
 _NOISE_SECTIONS = re.compile(
@@ -143,9 +139,7 @@ def article_to_paragraphs(article_id: str, title: str, text: str,
     return passages
 
 
-# ────────────────────────────────────────────────────────────────────────────
 # Wikipedia streaming
-# ────────────────────────────────────────────────────────────────────────────
 def stream_wikipedia_passages(
     max_passages: int,
     max_articles: int,
@@ -213,9 +207,7 @@ def stream_wikipedia_passages(
     return passages
 
 
-# ────────────────────────────────────────────────────────────────────────────
 # Main
-# ────────────────────────────────────────────────────────────────────────────
 def main() -> int:
     ap = argparse.ArgumentParser(
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -268,7 +260,7 @@ def main() -> int:
     print(f"[build_wikipedia_index] dense           : "
           f"{'no' if args.no_dense else f'yes ({args.dense_model})'}")
 
-    # ── Stream + filter + chunk ───────────────────────────────────────────
+    # Stream + filter + chunk
     passages = stream_wikipedia_passages(
         max_passages=args.max_passages,
         max_articles=args.max_articles,
@@ -296,7 +288,7 @@ def main() -> int:
     print(f"[build_wikipedia_index] wrote {len(passages)} passages to "
           f"{passages_path}")
 
-    # ── Build BM25 + dense via existing HybridRetriever ───────────────────
+    # Build BM25 + dense via existing HybridRetriever
     retriever = HybridRetriever(
         passages=passages,
         dense_model_name=args.dense_model,
@@ -316,7 +308,7 @@ def main() -> int:
     print(f"[build_wikipedia_index] index saved to {out_dir}")
     print(f"[build_wikipedia_index] ready to run:")
     print(f"  python scripts/run_pipeline.py --n 952 \\")
-    print(f"    --data-dir data_liar \\")
+    print(f"    --data-dir data/liar_splits \\")
     print(f"    --index-dir {out_dir} \\")
     print(f"    --out-dir outputs/results_liar_wikipedia \\")
     print(f"    --verifier ollama --ollama-model qwen2.5:14b-instruct "

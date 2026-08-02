@@ -1,0 +1,33 @@
+{
+  "n": 425,
+  "threshold": 0.5,
+  "component_f1": {
+    "claim": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    },
+    "premise": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    },
+    "citation": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    }
+  },
+  "relation_f1": {
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1": 0.0
+  },
+  "macro_component_f1": 0.0,
+  "by_domain": {
+    "politics": {
+      "n": 425,
+      "macro_relation_f1": 0.0
+    }
+  }
+}

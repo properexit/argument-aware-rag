@@ -1,0 +1,20 @@
+{
+  "backend": "dummy",
+  "n_train_records": 2832,
+  "config": {
+    "backend": "dummy",
+    "base_model": "dummy",
+    "max_input_len": 512,
+    "max_target_len": 512,
+    "batch_size": 4,
+    "grad_accum": 8,
+    "learning_rate": 0.0003,
+    "weight_decay": 0.01,
+    "warmup_ratio": 0.1,
+    "num_epochs": 1,
+    "fp16": true,
+    "gradient_checkpointing": true,
+    "seed": 42,
+    "eval_every_steps": 0
+  }
+}

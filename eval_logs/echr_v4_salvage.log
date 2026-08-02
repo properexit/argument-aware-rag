@@ -1,0 +1,34 @@
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Loading weights:   0%|          | 0/338 [00:00<?, ?it/s]Loading weights:  56%|█████▌    | 189/338 [00:00<00:00, 1884.68it/s]Loading weights: 100%|██████████| 338/338 [00:00<00:00, 2769.20it/s]
+[student:hf:load] base=Qwen/Qwen2.5-1.5B-Instruct + LoRA adapter from phase2_student_beta_qwen1.5b_lora_v4
+loaded v4 + salvage parser
+
+SANITY: case 001-82175_5-3 salvage → claims=5 premises=14 relations=23
+
+[1/20] 001-82175_5-3: pred_c/p=5/14 gold_c/p=18/3 t=323s
+[2/20] 001-117879_6: pred_c/p=2/11 gold_c/p=12/8 t=155s
+[3/20] 001-103251_8: pred_c/p=6/6 gold_c/p=20/7 t=258s
+[4/20] 001-94301_2: pred_c/p=4/5 gold_c/p=42/13 t=320s
+[5/20] 001-173262_13: pred_c/p=2/12 gold_c/p=11/3 t=159s
+[6/20] 001-165755_2: pred_c/p=1/2 gold_c/p=39/12 t=108s
+[7/20] 001-160422_13: pred_c/p=7/9 gold_c/p=37/9 t=194s
+[8/20] 001-138562_8: pred_c/p=1/2 gold_c/p=27/10 t=140s
+[9/20] 001-93608_8: pred_c/p=1/4 gold_c/p=23/10 t=175s
+[10/20] 001-115383_5: pred_c/p=2/7 gold_c/p=16/5 t=106s
+[11/20] 001-87640_6-1: pred_c/p=7/7 gold_c/p=8/5 t=157s
+[12/20] 001-94127_5-2: pred_c/p=2/11 gold_c/p=5/4 t=153s
+[13/20] 001-61121_5-5: pred_c/p=7/7 gold_c/p=13/3 t=191s
+[14/20] 001-112529_p1-1: pred_c/p=1/3 gold_c/p=20/16 t=149s
+[15/20] 001-72241_3: pred_c/p=3/12 gold_c/p=8/5 t=219s
+[16/20] 001-209035_8: pred_c/p=2/3 gold_c/p=32/15 t=86s
+[17/20] 001-104478_6-3: pred_c/p=6/7 gold_c/p=12/5 t=146s
+[18/20] 001-103925_p1-1: pred_c/p=2/12 gold_c/p=6/4 t=323s
+[19/20] 001-113934_6: pred_c/p=1/2 gold_c/p=18/5 t=43s
+[20/20] 001-159378_2: pred_c/p=8/7 gold_c/p=35/3 t=193s
+
+=== ECHR w/ SALVAGE (non-empty 20/20) ===
+claim   F1=0.030 P=0.100 R=0.017 (tp=7 fp=63 fn=395)
+premise F1=0.118 P=0.120 R=0.117 (tp=17 fp=125 fn=128)
+COMPONENT F1 (macro): 0.074
+extraction rate: 53/547 = 9.7%
+wall: 60.0 min

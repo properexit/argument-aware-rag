@@ -26,9 +26,7 @@ from typing import Sequence
 from .schema import ArgStructureDict, TrainRecord
 
 
-# ────────────────────────────────────────────────────────────────────────────
 # Text matching utilities
-# ────────────────────────────────────────────────────────────────────────────
 
 _WORD = re.compile(r"\w+")
 
@@ -73,9 +71,7 @@ def _greedy_match(
     return matches
 
 
-# ────────────────────────────────────────────────────────────────────────────
 # Component-level F1
-# ────────────────────────────────────────────────────────────────────────────
 
 def component_prf(
     pred: ArgStructureDict, gold: ArgStructureDict, threshold: float = 0.5
@@ -98,9 +94,7 @@ def component_prf(
     return out
 
 
-# ────────────────────────────────────────────────────────────────────────────
 # Relation-level F1 (conditional on component alignment)
-# ────────────────────────────────────────────────────────────────────────────
 
 def relation_prf(
     pred: ArgStructureDict, gold: ArgStructureDict, threshold: float = 0.5
@@ -144,9 +138,7 @@ def relation_prf(
             "matched": matched}
 
 
-# ────────────────────────────────────────────────────────────────────────────
 # Corpus-level aggregation
-# ────────────────────────────────────────────────────────────────────────────
 
 def evaluate_corpus(
     records: list[TrainRecord],

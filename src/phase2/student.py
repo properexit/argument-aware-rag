@@ -28,9 +28,7 @@ from pathlib import Path
 from .schema import ArgStructureDict, StudentConfig, TrainRecord
 
 
-# ────────────────────────────────────────────────────────────────────────────
 # Shared utilities
-# ────────────────────────────────────────────────────────────────────────────
 
 INSTRUCTION = ("Extract all argument components and relations from the text. "
                "Output strict JSON with claim_components, premise_components, "
@@ -143,9 +141,7 @@ def _salvage_parse(raw: str) -> ArgStructureDict:
     return out
 
 
-# ────────────────────────────────────────────────────────────────────────────
 # Abstract base
-# ────────────────────────────────────────────────────────────────────────────
 
 class StudentTrainerBase(abc.ABC):
     name: str = "base"
@@ -170,9 +166,7 @@ class StudentTrainerBase(abc.ABC):
         ...
 
 
-# ────────────────────────────────────────────────────────────────────────────
 # DummyTrainer — instant, no GPU
-# ────────────────────────────────────────────────────────────────────────────
 
 class DummyTrainer(StudentTrainerBase):
     """No-op trainer. Saves a small JSON marker file and predicts a fixed
@@ -220,9 +214,7 @@ class DummyTrainer(StudentTrainerBase):
         }, "Dummy student prediction.")
 
 
-# ────────────────────────────────────────────────────────────────────────────
 # HFTrainer — HuggingFace fine-tune, GPU-required
-# ────────────────────────────────────────────────────────────────────────────
 
 class HFTrainer(StudentTrainerBase):
     """Generic HuggingFace seq2seq / causal-LM fine-tuner.
@@ -296,7 +288,7 @@ class HFTrainer(StudentTrainerBase):
             model = ModelCls.from_pretrained(self.cfg.base_model,
                                              torch_dtype=torch.float32)
 
-        # ── LoRA wrap ──
+        # LoRA wrap
         # Phase 2-β-v2: train low-rank adapters on attention projections
         # instead of the full model. Cuts gradient + optimizer memory to
         # near-zero, so Qwen-1.5B+ fits on 11 GB Pascal.
@@ -566,9 +558,7 @@ class HFTrainer(StudentTrainerBase):
             raw = self._tokenizer.decode(out[0][input_len:], skip_special_tokens=True)
         return _parse_output(raw)
 
-    # ────────────────────────────────────────────────────────────────────
     # Batched inference (Phase 2-β-v2)
-    # ────────────────────────────────────────────────────────────────────
 
     def predict_batch(self, texts: list[str]
                       ) -> list[tuple[ArgStructureDict, str]]:
@@ -640,9 +630,7 @@ class HFTrainer(StudentTrainerBase):
         return results
 
 
-# ────────────────────────────────────────────────────────────────────────────
 # Factory
-# ────────────────────────────────────────────────────────────────────────────
 
 def build_student(cfg: StudentConfig) -> StudentTrainerBase:
     if cfg.backend == "dummy":

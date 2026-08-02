@@ -3,7 +3,7 @@
 # 360 remaining (after HF Inference burned out at row 65) cost ~$0.30.
 #
 # Requires: export TOGETHER_API_KEY=...
-#   (sign up free at https://api.together.xyz/ — email only, no card)
+#   (sign up free at https://api.together.xyz/ -- email only, no card)
 #
 # Together's Llama-70B-Turbo variant is significantly faster than HF
 # Inference's. Expected: ~5 sec/row, so 360 rows finish in ~30 min.

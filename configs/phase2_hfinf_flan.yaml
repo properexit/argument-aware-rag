@@ -5,11 +5,11 @@
 #   export HF_TOKEN=hf_...              # https://huggingface.co/settings/tokens
 #   pip install huggingface_hub
 #
-# Llama 3.3 70B is gated — accept the license at
+# Llama 3.3 70B is gated -- accept the license at
 #   https://huggingface.co/meta-llama/Llama-3.3-70B-Instruct
 # once with the same HF account. Then the token unlocks inference.
 #
-# If HF rate-limits you mid-run, swap to phase2_local7b_flan.yaml —
+# If HF rate-limits you mid-run, swap to phase2_local7b_flan.yaml -- 
 # annotate_silver.py is resumable, so it picks up where this left off.
 run_name: phase2_hfinf_flan
 

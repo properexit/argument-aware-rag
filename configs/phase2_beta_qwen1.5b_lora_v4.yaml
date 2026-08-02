@@ -15,7 +15,7 @@
 #   - LIARArg silver (2,123 train only)
 #   Total train: ~3,617 records (vs v3's 1,823)
 #
-# Fresh adapter (NOT continual from v3) — this gives a clean A/B against v3
+# Fresh adapter (NOT continual from v3) -- this gives a clean A/B against v3
 # on identical methodology. If v4 > v3, the silver helped. If v4 ≈ v3, the
 # domain coverage wasn't the missing piece.
 #

@@ -1,0 +1,44 @@
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Loading weights:   0%|          | 0/338 [00:00<?, ?it/s]Loading weights: 100%|██████████| 338/338 [00:00<00:00, 9188.73it/s]
+[student:hf:load] base=Qwen/Qwen2.5-1.5B-Instruct + LoRA adapter from phase2_student_beta_qwen1.5b_lora_v4
+[v4-parse] use_cache: model=True
+[v4-parse] resuming — 54 done
+  64/425  (2302s, 0.00/s, ETA 1385.0m)
+  74/425  (4659s, 0.00/s, ETA 1362.8m)
+  84/425  (6811s, 0.00/s, ETA 1290.3m)
+  94/425  (8561s, 0.00/s, ETA 1180.7m)
+  104/425  (10336s, 0.00/s, ETA 1106.0m)
+  114/425  (12197s, 0.00/s, ETA 1053.6m)
+  124/425  (14056s, 0.00/s, ETA 1007.3m)
+  134/425  (16066s, 0.00/s, ETA 974.0m)
+  144/425  (18363s, 0.00/s, ETA 955.6m)
+  154/425  (20330s, 0.00/s, ETA 918.2m)
+  164/425  (22407s, 0.00/s, ETA 886.1m)
+  174/425  (24040s, 0.00/s, ETA 838.1m)
+  184/425  (26050s, 0.00/s, ETA 804.9m)
+  194/425  (28083s, 0.00/s, ETA 772.3m)
+  204/425  (30265s, 0.00/s, ETA 743.2m)
+  214/425  (32495s, 0.00/s, ETA 714.2m)
+  224/425  (34472s, 0.00/s, ETA 679.3m)
+  234/425  (36259s, 0.00/s, ETA 641.2m)
+  244/425  (38132s, 0.00/s, ETA 605.4m)
+  254/425  (39751s, 0.01/s, ETA 566.5m)
+  264/425  (42454s, 0.00/s, ETA 542.5m)
+  274/425  (44717s, 0.00/s, ETA 511.5m)
+  284/425  (46769s, 0.00/s, ETA 477.9m)
+  294/425  (49154s, 0.00/s, ETA 447.2m)
+  304/425  (51827s, 0.00/s, ETA 418.1m)
+  314/425  (54549s, 0.00/s, ETA 388.1m)
+  324/425  (57046s, 0.00/s, ETA 355.7m)
+  334/425  (59712s, 0.00/s, ETA 323.4m)
+  344/425  (61648s, 0.00/s, ETA 287.0m)
+  354/425  (64144s, 0.00/s, ETA 253.0m)
+  364/425  (66942s, 0.00/s, ETA 219.5m)
+  374/425  (69372s, 0.00/s, ETA 184.3m)
+  384/425  (71614s, 0.00/s, ETA 148.3m)
+  394/425  (73793s, 0.00/s, ETA 112.1m)
+  404/425  (75885s, 0.00/s, ETA 75.9m)
+  414/425  (78150s, 0.00/s, ETA 39.8m)
+  424/425  (80806s, 0.00/s, ETA 3.6m)
+
+[v4-parse] DONE. 425 rows, 92 empty (22%)

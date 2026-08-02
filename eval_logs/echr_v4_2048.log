@@ -1,0 +1,13 @@
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Loading weights:   0%|          | 0/338 [00:00<?, ?it/s]Loading weights: 100%|██████████| 338/338 [00:00<00:00, 7482.99it/s]
+[student:hf:load] base=Qwen/Qwen2.5-1.5B-Instruct + LoRA adapter from phase2_student_beta_qwen1.5b_lora_v4
+loaded v4  |  max_target=2048
+
+[1/20] 001-82175_5-3: EMPTY  t=362s  reason_chars=0  gold_c/p=18/3
+[2/20] 001-117879_6: EMPTY  t=197s  reason_chars=0  gold_c/p=12/8
+[3/20] 001-103251_8: EMPTY  t=327s  reason_chars=0  gold_c/p=20/7
+[4/20] 001-94301_2: EMPTY  t=405s  reason_chars=0  gold_c/p=42/13
+Traceback (most recent call last):
+  File "<stdin>", line 48, in <module>
+  File "<stdin>", line 48, in <listcomp>
+KeyError: 'text'

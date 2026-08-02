@@ -1,0 +1,33 @@
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Loading weights:   0%|          | 0/338 [00:00<?, ?it/s]Loading weights: 100%|██████████| 338/338 [00:00<00:00, 4401.73it/s]
+[student:hf:load] base=Qwen/Qwen2.5-1.5B-Instruct + LoRA adapter from phase2_student_beta_qwen1.5b_lora_v3
+[parse-v3] loaded student.  use_cache=True
+[parse-v3] resuming — 52 predictions on disk
+[parse-v3] 373 rows to do (of 425 total)
+  4/373 (174s, 0.02/s, ETA 266.9 min)
+  24/373 (807s, 0.03/s, ETA 195.6 min)
+  44/373 (1445s, 0.03/s, ETA 180.1 min)
+  64/373 (2094s, 0.03/s, ETA 168.5 min)
+  84/373 (2686s, 0.03/s, ETA 154.0 min)
+  104/373 (3299s, 0.03/s, ETA 142.2 min)
+  124/373 (3940s, 0.03/s, ETA 131.9 min)
+  144/373 (4499s, 0.03/s, ETA 119.2 min)
+  164/373 (5197s, 0.03/s, ETA 110.4 min)
+  184/373 (5895s, 0.03/s, ETA 100.9 min)
+  204/373 (6453s, 0.03/s, ETA 89.1 min)
+  224/373 (7131s, 0.03/s, ETA 79.1 min)
+  244/373 (7817s, 0.03/s, ETA 68.9 min)
+  264/373 (8327s, 0.03/s, ETA 57.3 min)
+  284/373 (8924s, 0.03/s, ETA 46.6 min)
+  304/373 (9580s, 0.03/s, ETA 36.2 min)
+  324/373 (10200s, 0.03/s, ETA 25.7 min)
+  344/373 (10719s, 0.03/s, ETA 15.1 min)
+  364/373 (11286s, 0.03/s, ETA 4.7 min)
+
+[parse-v3] DONE. 1174 rows | empty: 930 (79.2%) | real: 244
+rows | empty: 911 (79.3%) | real: 238
+s, 0.03/s, ETA 20.5 min)
+  404/425 (12088s, 0.03/s, ETA 10.5 min)
+  424/425 (12611s, 0.03/s, ETA 0.5 min)
+
+[parse-v3] DONE. 1179 rows | empty: 935 (79.3%) | real: 244

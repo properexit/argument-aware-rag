@@ -31,7 +31,7 @@ REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO))
 
 
-# ────────────────────── paths ──────────────────────
+# paths
 
 PARSER_PREDS = Path.home() / "Downloads" / "parser_preds_llama70b.jsonl"
 GOLD_PATH    = REPO / "data" / "test.jsonl"
@@ -45,7 +45,7 @@ MODEL      = "qwen2.5:14b-instruct"
 TIMEOUT    = 240  # seconds per verifier call (Mac Ollama can be slow)
 
 
-# ────────────────────── prompt ──────────────────────
+# prompt
 
 LIAR_LABELS = ["True", "Mostly-true", "Half-true",
                "Barely-true", "False", "Pants-fire"]

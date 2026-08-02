@@ -1,0 +1,44 @@
+{
+  "teacher": "gpt-oss-120b via Cerebras (single key)",
+  "method": "zero-shot parser on in-domain held-out test sets",
+  "cap_per_domain": 50,
+  "per_domain": {
+    "microtext": {
+      "n": 11,
+      "empty": 0,
+      "comp_f1": 0.559042809042809,
+      "rel_f1": 0.4465367965367965,
+      "claim_f1": 0.8787878787878788,
+      "premise_f1": 0.7983405483405484,
+      "citation_f1": 0.0
+    },
+    "cdcp": {
+      "n": 50,
+      "empty": 3,
+      "comp_f1": 0.2770348072406896,
+      "rel_f1": 0.04305714285714285,
+      "claim_f1": 0.4157489177489178,
+      "premise_f1": 0.41535550397315096,
+      "citation_f1": 0.0
+    },
+    "abstrct": {
+      "n": 50,
+      "empty": 6,
+      "comp_f1": 0.13573570873570873,
+      "rel_f1": 0.13570418470418472,
+      "claim_f1": 0.16933333333333334,
+      "premise_f1": 0.23787379287379287,
+      "citation_f1": 0.0
+    },
+    "perspectrum": {
+      "n": 50,
+      "empty": 30,
+      "comp_f1": 0.1748004638004638,
+      "rel_f1": 0.1129732078044165,
+      "claim_f1": 0.32666666666666666,
+      "premise_f1": 0.19465780165780164,
+      "citation_f1": 0.003076923076923077
+    }
+  },
+  "average_comp_f1": 0.2866534472049178
+}

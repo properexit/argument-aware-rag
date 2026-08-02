@@ -88,10 +88,8 @@ def main() -> int:
     print(f"[prepare_data] kept {len(rows)} rows after quality filter")
 
     if args.liar_split:
-        # ------------------------------------------------------------
         # LIAR-standard split: intersect quality-filtered LIARArg rows
         # with LIAR's official train/valid/test partitions.
-        # ------------------------------------------------------------
         print(f"[prepare_data] loading LIAR splits from {args.liar_dir}")
         liar_ids = _liar_split_ids(args.liar_dir)
         for name in ("train", "val", "test"):
@@ -106,9 +104,7 @@ def main() -> int:
         for name, rs in split.items():
             print(f"[prepare_data] LIAR-aligned {name}: {len(rs)} rows")
     else:
-        # ------------------------------------------------------------
         # Default: stratified random split (Phase 1 development mode).
-        # ------------------------------------------------------------
         split = stratified_split(
             rows,
             test_frac=args.test_frac,

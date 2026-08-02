@@ -1,0 +1,90 @@
+[eval-v2] config: configs/phase2_beta_qwen1.5b_lora_v3.yaml
+[eval-v2] model dir: phase2_student_beta_qwen1.5b_lora_v3
+[eval-v2] cap=50  batch=4
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Loading weights:   0%|          | 0/338 [00:00<?, ?it/s]Loading weights:  45%|████▌     | 153/338 [00:00<00:00, 1527.07it/s]Loading weights: 100%|██████████| 338/338 [00:00<00:00, 2544.11it/s]
+[student:hf:load] base=Qwen/Qwen2.5-1.5B-Instruct + LoRA adapter from phase2_student_beta_qwen1.5b_lora_v3
+[eval-v2] loaded student.  use_cache=True
+  microtext 4/11  (40s, empty=0)
+  microtext 8/11  (78s, empty=0)
+  microtext 11/11  (117s, empty=0)
+
+  ── microtext ── n=11  empty=0 (0%)  (117s)
+     component macro-F1: 0.414
+     relation F1:        0.000
+     claim F1:           0.515
+     premise F1:         0.727
+     citation F1:        0.000
+
+  cdcp 4/50  (30s, empty=0)
+  cdcp 8/50  (73s, empty=0)
+  cdcp 12/50  (136s, empty=2)
+  cdcp 16/50  (167s, empty=2)
+  cdcp 20/50  (200s, empty=2)
+  cdcp 24/50  (264s, empty=3)
+  cdcp 28/50  (329s, empty=4)
+  cdcp 32/50  (377s, empty=4)
+  cdcp 36/50  (440s, empty=5)
+  cdcp 40/50  (474s, empty=5)
+  cdcp 44/50  (534s, empty=5)
+  cdcp 48/50  (597s, empty=6)
+  cdcp 50/50  (660s, empty=7)
+
+  ── cdcp ── n=50  empty=7 (14%)  (660s)
+     component macro-F1: 0.219
+     relation F1:        0.000
+     claim F1:           0.507
+     premise F1:         0.151
+     citation F1:        0.000
+
+  abstrct 4/50  (65s, empty=3)
+  abstrct 8/50  (129s, empty=5)
+  abstrct 12/50  (177s, empty=5)
+  abstrct 16/50  (242s, empty=6)
+  abstrct 20/50  (322s, empty=7)
+  abstrct 24/50  (403s, empty=10)
+  abstrct 28/50  (484s, empty=12)
+  abstrct 32/50  (565s, empty=15)
+  abstrct 36/50  (646s, empty=17)
+  abstrct 40/50  (726s, empty=19)
+  abstrct 44/50  (795s, empty=20)
+  abstrct 48/50  (859s, empty=21)
+  abstrct 50/50  (918s, empty=21)
+
+  ── abstrct ── n=50  empty=21 (42%)  (918s)
+     component macro-F1: 0.249
+     relation F1:        0.103
+     claim F1:           0.393
+     premise F1:         0.354
+     citation F1:        0.000
+
+  perspectrum 4/50  (65s, empty=4)
+  perspectrum 8/50  (130s, empty=7)
+  perspectrum 12/50  (195s, empty=11)
+  perspectrum 16/50  (260s, empty=15)
+  perspectrum 20/50  (325s, empty=18)
+  perspectrum 24/50  (405s, empty=22)
+  perspectrum 28/50  (486s, empty=26)
+  perspectrum 32/50  (568s, empty=30)
+  perspectrum 36/50  (649s, empty=33)
+  perspectrum 40/50  (731s, empty=37)
+  perspectrum 44/50  (813s, empty=41)
+  perspectrum 48/50  (878s, empty=44)
+  perspectrum 50/50  (941s, empty=46)
+
+  ── perspectrum ── n=50  empty=46 (92%)  (941s)
+     component macro-F1: 0.034
+     relation F1:        0.000
+     claim F1:           0.063
+     premise F1:         0.039
+     citation F1:        0.000
+
+
+=== SUMMARY ===
+  microtext      comp-F1=0.414  rel-F1=0.000  empty=0/11
+  cdcp           comp-F1=0.219  rel-F1=0.000  empty=7/50
+  abstrct        comp-F1=0.249  rel-F1=0.103  empty=21/50
+  perspectrum    comp-F1=0.034  rel-F1=0.000  empty=46/50
+  average        comp-F1=0.229
+
+[eval-v2] summary → eval_logs/phase2beta_v3_eval.json

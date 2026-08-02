@@ -24,7 +24,7 @@ teacher:
   backend: cerebras
   model: gpt-oss-120b
   max_input_chars: 2000
-  # gpt-oss-120b is a reasoning model — it emits chain-of-thought in
+  # gpt-oss-120b is a reasoning model -- it emits chain-of-thought in
   # message.reasoning BEFORE writing message.content. Cerebras counts
   # both toward max_tokens, so the budget must cover ~600-1000 tokens
   # of reasoning + the full JSON output (~300-500 tokens). 2048 is the

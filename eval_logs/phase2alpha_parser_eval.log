@@ -1,0 +1,102 @@
+[eval] teacher: cerebras (gpt-oss-120b)
+[microtext] 11 records, 11 already done
+
+── microtext ── n=11 empty=0 (0%)
+   comp-F1=0.559 rel-F1=0.447 claim-F1=0.879 premise-F1=0.798
+
+[cdcp] 50 records, 7 already done
+  [teacher:cerebras 429 — sleeping 5s]
+  cdcp 10/50 (358s, ETA 79.5min, empty_so_far=0)
+  cdcp 20/50 (1021s, ETA 39.3min, empty_so_far=0)
+  cdcp 30/50 (1623s, ETA 23.5min, empty_so_far=1)
+  cdcp 40/50 (2227s, ETA 11.2min, empty_so_far=1)
+  cdcp 50/50 (2591s, ETA 0.0min, empty_so_far=3)
+
+── cdcp ── n=50 empty=3 (6%)
+   comp-F1=0.277 rel-F1=0.043 claim-F1=0.416 premise-F1=0.415
+
+[abstrct] 50 records, 79 already done
+
+── abstrct ── n=50 empty=6 (12%)
+   comp-F1=0.136 rel-F1=0.136 claim-F1=0.169 premise-F1=0.238
+
+[perspectrum] 50 records, 4 already done
+  perspectrum 10/50 (196s, ETA   abstrct 50/50 (1914s, ETA 0.0min, empty_so_far=3)
+
+── abstrct ── n=50 e  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 10s]
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 10s]
+  [teacher:cerebras 429 — sleeping 20s]
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 10s]
+  [teacher:cerebras 429 — sleeping 20s]
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 10s]
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 10s]
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 10s]
+  [teacher:cerebras 429 — sleeping 20s]
+  perspectrum 30/50 (713s, ETA 9.1min, empty_so_far=15)
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 10s]
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 10s]
+  [teacher:cerebras 429 — sleeping 20s]
+  [te    perspectrum 40/50 (key #2, 1050s, ETA 4.4 min)
+    perspectrum 50/50 (key #2, 1190s, ETA 0.0 min)
+
+  ── perspectrum ── n=50 empty=25 (50%) (1190s)
+     component macro-F1: 0.212
+     relation F1:        0.127
+     claim F1:           0.387
+     premise F1:         0.245
+     citation F1:        0.003
+
+
+=== SUMMARY (Phase 2-α gpt-oss-120b, in-domain) ===
+  microtext      comp-F1=0.559  rel-F1=0.447  empty=0/11
+  cdcp           comp-F1=0.277  rel-F1=0.043  empty=3/50
+  abstrct        comp-F1=0.420  rel-F1=0.424  empty=3/50
+  perspectrum    comp-F1=0.212  rel-F1=0.127  empty=25/50
+  average        com  [teacher:cerebras 429 — sleeping 10s]
+  [teacher:cerebras 429 — sleeping 20s]
+  perspectrum 40/50 (1014s, ETA 4.7min, empty_so_far=23)
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 10s]
+  [teacher:cerebras 429 — sleeping 20s]
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 10s]
+  [teacher:cerebras 429 — sleeping 20s]
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 10s]
+  [teacher:cerebras 429 — sleeping 20s]
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 10s]
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 10s]
+  [teacher:cerebras 429 — sleeping 20s]
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 10s]
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 10s]
+  [teacher:cerebras 429 — sleeping 20s]
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 10s]
+  [teacher:cerebras 429 — sleeping 20s]
+  perspectrum 50/50 (1334s, ETA 0.0min, empty_so_far=30)
+
+── perspectrum ── n=50 empty=30 (60%)
+   comp-F1=0.175 rel-F1=0.113 claim-F1=0.327 premise-F1=0.195
+
+
+=== SUMMARY ===
+  microtext      comp-F1=0.559 rel-F1=0.447 empty=0/11
+  cdcp           comp-F1=0.277 rel-F1=0.043 empty=3/50
+  abstrct        comp-F1=0.136 rel-F1=0.136 empty=6/50
+  perspectrum    comp-F1=0.175 rel-F1=0.113 empty=30/50
+  average        comp-F1=0.287

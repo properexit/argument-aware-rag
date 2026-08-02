@@ -1,7 +1,7 @@
 # Fully offline: local Qwen2.5-7B teacher + Flan-T5-Large student.
 # No API key, no rate limit, no internet during the run. The model
 # downloads once (~5 GB at 4-bit) on first use, then runs locally on
-# your GPU forever after — unlimited annotation budget.
+# your GPU forever after -- unlimited annotation budget.
 #
 # Why 7B at 4-bit instead of 3B at fp16:
 #   - Silver-label quality is much closer to a 70B teacher (~85% vs ~70%)
@@ -17,11 +17,11 @@
 # If bitsandbytes 4-bit fails on Pascal (older bnb versions don't
 # support compute 6.1), the cleaner backend is llama-cpp-python with
 # a GGUF model. Drop `quantization: 4bit` and set `model:` to a 3B
-# fp16 model — or implement LlamaCppTeacher (sketch in teacher.py).
+# fp16 model -- or implement LlamaCppTeacher (sketch in teacher.py).
 #
 # IMPORTANT: the teacher and student both want the GPU. annotate_silver
 # fully releases the model before train_student starts (LocalHFTeacher
-# has a release() method), so running them sequentially is fine — but
+# has a release() method), so running them sequentially is fine -- but
 # don't try to run them in parallel from different cells.
 run_name: phase2_local7b_flan
 
@@ -48,12 +48,12 @@ teacher:
   model: Qwen/Qwen2.5-7B-Instruct
   max_input_chars: 4000
   max_output_tokens: 800
-  rpm_cap: 1000                 # not used for local — keep high
+  rpm_cap: 1000                 # not used for local -- keep high
   max_requests_per_day: 100000  # effectively unlimited
   seed: 42
   include_cot: true
   retries_per_call: 1           # local model rarely needs retries
-  quantization: 4bit            # ← Pascal (1080 Ti) needs bnb ≥ 0.42
+  quantization: 4bit  # Pascal (1080 Ti) needs bnb ≥ 0.42
   device: auto                  # auto-selects cuda
 
 student:

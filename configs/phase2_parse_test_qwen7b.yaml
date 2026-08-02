@@ -30,7 +30,7 @@ teacher:
   quantization: 4bit
   device: auto
 
-# student section unused for this run — kept for schema validation
+# student section unused for this run -- kept for schema validation
 student:
   backend: dummy
   base_model: dummy

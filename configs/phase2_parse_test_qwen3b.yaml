@@ -1,9 +1,9 @@
 # Phase 2-α: parse test split with local Qwen2.5-3B (fp16, no quantization).
-# Skips bitsandbytes entirely — avoids the torch 2.4 vs transformers
+# Skips bitsandbytes entirely -- avoids the torch 2.4 vs transformers
 # set_submodule incompatibility on Pascal hardware.
 #
 # Qwen2.5-3B in fp16 ≈ 6 GB, fits in GTX 1080 Ti's 11 GB with headroom.
-# Slightly weaker parser than 7B at 4-bit, but still very capable —
+# Slightly weaker parser than 7B at 4-bit, but still very capable -- 
 # good enough for the architecture-validation question Phase 2-α asks.
 run_name: phase2_parse_test_qwen3b
 
@@ -22,7 +22,7 @@ teacher:
   model: Qwen/Qwen2.5-3B-Instruct
   # On Pascal (no tensor cores), generation cost scales hard with context+output
   # length. Empirically: 6000/1024 → ~2 min/row (~14h for 425).
-  # 2000/384  → ~15 sec/row (~1h45m for 425). Quality impact: minor —
+  # 2000/384  → ~15 sec/row (~1h45m for 425). Quality impact: minor -- 
   # Politifact articles front-load the statement and first 1-2 premises in
   # the opening paragraphs, and ArgStructureDict JSON usually fits in
   # 200-300 tokens.
@@ -33,7 +33,7 @@ teacher:
   seed: 42
   include_cot: false
   retries_per_call: 1
-  quantization: none             # ← no bnb, no version conflict
+  quantization: none  # no bnb, no version conflict
   device: auto
 
 student:

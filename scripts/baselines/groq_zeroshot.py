@@ -203,7 +203,7 @@ def main() -> int:
                          "Use 999999 for unlimited.")
     args = ap.parse_args()
 
-    # ---- API key check ----
+    # API key check
     if not os.environ.get("GROQ_API_KEY"):
         print("ERROR: GROQ_API_KEY not set.\n"
               "  1. Sign up at https://groq.com (no card needed)\n"
@@ -217,7 +217,7 @@ def main() -> int:
         return 1
     client = Groq()
 
-    # ---- Decide max-requests budget ----
+    # Decide max-requests budget
     # TPD (token daily) is usually the binding constraint, not RPD.
     # Pick whichever cap implies fewer requests.
     if args.max_requests is None:
@@ -231,7 +231,7 @@ def main() -> int:
               f"({binding}-limited; RPD-cap={rpd_cap}, "
               f"TPD-cap={tpd_cap} at est {EST_TOKENS_PER_REQUEST} tok/req)")
 
-    # ---- Output directory: FIXED per-model so we can resume ----
+    # Output directory: FIXED per-model so we can resume
     safe_name = (args.model
                  .replace(":", "_").replace("/", "_")
                  .replace(".", "_").replace("-", "_"))
@@ -241,12 +241,12 @@ def main() -> int:
     preds_path = out_dir / "predictions.jsonl"
     print(f"[groq:{args.model}] output dir: {out_dir}")
 
-    # ---- Resume: skip already-completed row IDs ----
+    # Resume: skip already-completed row IDs
     done_ids = _load_done_ids(preds_path)
     if done_ids:
         print(f"[groq:{args.model}] resuming: {len(done_ids)} claims already done")
 
-    # ---- Load test rows, filter to remaining work ----
+    # Load test rows, filter to remaining work
     all_rows = load_test_rows(args.data_dir)
     todo = [r for r in all_rows if r.id not in done_ids]
     if args.n is not None:
@@ -262,7 +262,7 @@ def main() -> int:
         _emit_metrics(preds_path, out_dir, args)
         return 0
 
-    # ---- Run, respecting RPM, with incremental flushed writes ----
+    # Run, respecting RPM, with incremental flushed writes
     started_at = datetime.now().isoformat(timespec="seconds")
     t0 = time.time()
     sleep_between = 60.0 / max(args.rpm, 1)
@@ -342,7 +342,7 @@ def main() -> int:
     total_done = len(_load_done_ids(preds_path))
     print(f"  total predictions on disk: {total_done}/{len(all_rows)}")
 
-    # ---- Save run_config and compute metrics ----
+    # Save run_config and compute metrics
     cfg = BaselineRunConfig(
         name=f"groq_{safe_name}_zeroshot",
         description=(

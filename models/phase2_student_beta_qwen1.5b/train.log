@@ -1,0 +1,82 @@
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+[train-β] config: configs/phase2_beta_qwen1.5b.yaml
+[train-β] unified dir: phase2_data/unified
+[train-β] excluding sources: ('liararg',)
+[unified] loaded 2450 records across 4 source(s):
+  abstrct: 700
+  cdcp: 731
+  microtext: 112
+  perspectrum: 907
+[train-β] split distribution: {'test': 688, 'train': 1494, 'val': 268}
+[train-β] building student: hf (Qwen/Qwen2.5-1.5B-Instruct)
+[student:hf] base_model=Qwen/Qwen2.5-1.5B-Instruct (seq2seq=False)
+
+Loading weights:   0%|          | 0/338 [00:00<?, ?it/s]
+Loading weights:  31%|███       | 105/338 [00:00<00:00, 1043.51it/s]
+Loading weights:  62%|██████▏   | 210/338 [00:00<00:00, 750.14it/s] 
+Loading weights: 100%|██████████| 338/338 [00:00<00:00, 1187.54it/s]
+[transformers] warmup_ratio is deprecated and will be removed in v5.2. Use `warmup_steps` instead.
+[student:hf] encoding 1494 train + 268 val records (causal format)
+
+  0%|          | 0/141 [00:00<?, ?it/s]Traceback (most recent call last):
+  File "/usr/lib/python3.10/runpy.py", line 196, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "/usr/lib/python3.10/runpy.py", line 86, in _run_code
+    exec(code, run_globals)
+  File "./scripts/phase2/train_phase2_beta.py", line 73, in <module>
+    main()
+  File "./scripts/phase2/train_phase2_beta.py", line 68, in main
+    out = student.train(records, cfg.student_output_dir)
+  File "./src/phase2/student.py", line 326, in train
+    trainer.train()
+  File "./.venv/lib/python3.10/site-packages/transformers/trainer.py", line 1433, in train
+    return inner_training_loop(
+  File "./.venv/lib/python3.10/site-packages/transformers/trainer.py", line 1515, in _inner_training_loop
+    self._run_epoch(
+  File "./.venv/lib/python3.10/site-packages/transformers/trainer.py", line 1743, in _run_epoch
+    tr_loss_step = self.training_step(model, inputs, num_items_in_batch)
+  File "./.venv/lib/python3.10/site-packages/transformers/trainer.py", line 1915, in training_step
+    loss = self.compute_loss(model, inputs, num_items_in_batch=num_items_in_batch)
+  File "./.venv/lib/python3.10/site-packages/transformers/trainer.py", line 1987, in compute_loss
+    outputs = model(**inputs)
+  File "./.venv/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1553, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "./.venv/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1562, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "./.venv/lib/python3.10/site-packages/accelerate/utils/operations.py", line 943, in forward
+    return model_forward(*args, **kwargs)
+  File "./.venv/lib/python3.10/site-packages/accelerate/utils/operations.py", line 931, in __call__
+    return convert_to_fp32(self.model_forward(*args, **kwargs))
+  File "./.venv/lib/python3.10/site-packages/torch/amp/autocast_mode.py", line 43, in decorate_autocast
+    return func(*args, **kwargs)
+  File "./.venv/lib/python3.10/site-packages/transformers/utils/generic.py", line 907, in wrapper
+    output = func(self, *args, **kwargs)
+  File "./.venv/lib/python3.10/site-packages/transformers/models/qwen2/modeling_qwen2.py", line 462, in forward
+    outputs: BaseModelOutputWithPast = self.model(
+  File "./.venv/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1553, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "./.venv/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1562, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "./.venv/lib/python3.10/site-packages/transformers/utils/generic.py", line 1036, in wrapper
+    output = func(self, *args, **kwargs)
+  File "./.venv/lib/python3.10/site-packages/transformers/utils/output_capturing.py", line 252, in wrapper
+    outputs = func(self, *args, **kwargs)
+  File "./.venv/lib/python3.10/site-packages/transformers/models/qwen2/modeling_qwen2.py", line 399, in forward
+    hidden_states = decoder_layer(
+  File "./.venv/lib/python3.10/site-packages/transformers/modeling_layers.py", line 93, in __call__
+    return super().__call__(*args, **kwargs)
+  File "./.venv/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1553, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "./.venv/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1562, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "./.venv/lib/python3.10/site-packages/transformers/models/qwen2/modeling_qwen2.py", line 307, in forward
+    hidden_states = self.mlp(hidden_states)
+  File "./.venv/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1553, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "./.venv/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1562, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "./.venv/lib/python3.10/site-packages/transformers/models/qwen2/modeling_qwen2.py", line 47, in forward
+    down_proj = self.down_proj(self.act_fn(self.gate_proj(x)) * self.up_proj(x))
+torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 210.00 MiB. GPU 0 has a total capacity of 10.91 GiB of which 88.06 MiB is free. Process 1769328 has 10.82 GiB memory in use. Of the allocated memory 10.45 GiB is allocated by PyTorch, and 217.55 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)
+
+  0%|          | 0/141 [00:09<?, ?it/s]

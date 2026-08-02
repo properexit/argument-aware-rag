@@ -1,0 +1,221 @@
+[eval-v2] config: configs/phase2_beta_qwen1.5b_lora_v3.yaml
+[eval-v2] model dir: phase2_student_beta_qwen1.5b_lora_v3
+[eval-v2] cap=0  batch=4
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Loading weights:   0%|          | 0/338 [00:00<?, ?it/s]Loading weights:  52%|█████▏    | 176/338 [00:00<00:00, 1748.21it/s]Loading weights: 100%|██████████| 338/338 [00:00<00:00, 2538.10it/s]
+[student:hf:load] base=Qwen/Qwen2.5-1.5B-Instruct + LoRA adapter from phase2_student_beta_qwen1.5b_lora_v3
+[eval-v2] loaded student.  use_cache=True
+  microtext 4/11  (48s, empty=0)
+  microtext 8/11  (95s, empty=0)
+  microtext 11/11  (134s, empty=0)
+
+  ── microtext ── n=11  empty=0 (0%)  (134s)
+     component macro-F1: 0.414
+     relation F1:        0.000
+     claim F1:           0.515
+     premise F1:         0.727
+     citation F1:        0.000
+
+  cdcp 4/150  (38s, empty=0)
+  cdcp 8/150  (92s, empty=0)
+  cdcp 12/150  (173s, empty=2)
+  cdcp 16/150  (212s, empty=2)
+  cdcp 20/150  (255s, empty=2)
+  cdcp 24/150  (335s, empty=3)
+  cdcp 28/150  (419s, empty=4)
+  cdcp 32/150  (481s, empty=4)
+  cdcp 36/150  (561s, empty=5)
+  cdcp 40/150  (604s, empty=5)
+  cdcp 44/150  (682s, empty=5)
+  cdcp 48/150  (762s, empty=6)
+  cdcp 52/150  (843s, empty=8)
+  cdcp 56/150  (923s, empty=10)
+  cdcp 60/150  (965s, empty=10)
+  cdcp 64/150  (1046s, empty=13)
+  cdcp 68/150  (1107s, empty=13)
+  cdcp 72/150  (1166s, empty=14)
+  cdcp 76/150  (1247s, empty=17)
+  cdcp 80/150  (1327s, empty=18)
+  cdcp 84/150  (1407s, empty=20)
+  cdcp 88/150  (1488s, empty=21)
+  cdcp 92/150  (1569s, empty=22)
+  cdcp 96/150  (1650s, empty=24)
+  cdcp 100/150  (1731s, empty=25)
+  cdcp 104/150  (1811s, empty=26)
+  cdcp 108/150  (1891s, empty=27)
+  cdcp 112/150  (1953s, empty=27)
+  cdcp 116/150  (2033s, empty=28)
+  cdcp 120/150  (2113s, empty=28)
+  cdcp 124/150  (2194s, empty=29)
+  cdcp 128/150  (2275s, empty=30)
+  cdcp 132/150  (2320s, empty=30)
+  cdcp 136/150  (2401s, empty=31)
+  cdcp 140/150  (2481s, empty=32)
+  cdcp 144/150  (2531s, empty=32)
+  cdcp 148/150  (2612s, empty=34)
+  cdcp 150/150  (2692s, empty=35)
+
+  ── cdcp ── n=150  empty=35 (23%)  (2693s)
+     component macro-F1: 0.182
+     relation F1:        0.000
+     claim F1:           0.442
+     premise F1:         0.105
+     citation F1:        0.000
+
+  abstrct 4/300  (82s, empty=3)
+  abstrct 8/300  (164s, empty=5)
+  abstrct 12/300  (226s, empty=5)
+  abstrct 16/300  (307s, empty=6)
+  abstrct 20/300  (372s, empty=7)
+  abstrct 24/300  (438s, empty=10)
+  abstrct 28/300  (503s, empty=12)
+  abstrct 32/300  (568s, empty=15)
+  abstrct 36/300  (633s, empty=17)
+  abstrct 40/300  (698s, empty=19)
+  abstrct 44/300  (754s, empty=20)
+  abstrct 48/300  (819s, empty=21)
+  abstrct 52/300  (884s, empty=23)
+  abstrct 56/300  (948s, empty=25)
+  abstrct 60/300  (1013s, empty=28)
+  abstrct 64/300  (1078s, empty=30)
+  abstrct 68/300  (1142s, empty=32)
+  abstrct 72/300  (1207s, empty=35)
+  abstrct 76/300  (1271s, empty=37)
+  abstrct 80/300  (1336s, empty=38)
+  abstrct 84/300  (1401s, empty=39)
+  abstrct 88/300  (1466s, empty=41)
+  abstrct 92/300  (1530s, empty=43)
+  abstrct 96/300  (1595s, empty=45)
+  abstrct 100/300  (1659s, empty=49)
+  abstrct 104/300  (1725s, empty=53)
+  abstrct 108/300  (1789s, empty=56)
+  abstrct 112/300  (1854s, empty=60)
+  abstrct 116/300  (1918s, empty=63)
+  abstrct 120/300  (1983s, empty=66)
+  abstrct 124/300  (2047s, empty=68)
+  abstrct 128/300  (2112s, empty=70)
+  abstrct 132/300  (2177s, empty=71)
+  abstrct 136/300  (2242s, empty=74)
+  abstrct 140/300  (2306s, empty=76)
+  abstrct 144/300  (2371s, empty=78)
+  abstrct 148/300  (2436s, empty=81)
+  abstrct 152/300  (2501s, empty=85)
+  abstrct 156/300  (2566s, empty=88)
+  abstrct 160/300  (2630s, empty=89)
+  abstrct 164/300  (2695s, empty=91)
+  abstrct 168/300  (2760s, empty=94)
+  abstrct 172/300  (2824s, empty=96)
+  abstrct 176/300  (2889s, empty=98)
+  abstrct 180/300  (2954s, empty=100)
+  abstrct 184/300  (3018s, empty=101)
+  abstrct 188/300  (3083s, empty=103)
+  abstrct 192/300  (3148s, empty=106)
+  abstrct 196/300  (3222s, empty=108)
+  abstrct 200/300  (3287s, empty=111)
+  abstrct 204/300  (3351s, empty=112)
+  abstrct 208/300  (3417s, empty=116)
+  abstrct 212/300  (3481s, empty=119)
+  abstrct 216/300  (3546s, empty=123)
+  abstrct 220/300  (3611s, empty=125)
+  abstrct 224/300  (3675s, empty=128)
+  abstrct 228/300  (3740s, empty=130)
+  abstrct 232/300  (3804s, empty=134)
+  abstrct 236/300  (3869s, empty=135)
+  abstrct 240/300  (3933s, empty=137)
+  abstrct 244/300  (3998s, empty=140)
+  abstrct 248/300  (4063s, empty=143)
+  abstrct 252/300  (4128s, empty=146)
+  abstrct 256/300  (4193s, empty=149)
+  abstrct 260/300  (4258s, empty=152)
+  abstrct 264/300  (4322s, empty=154)
+  abstrct 268/300  (4382s, empty=154)
+  abstrct 272/300  (4447s, empty=156)
+  abstrct 276/300  (4512s, empty=158)
+  abstrct 280/300  (4575s, empty=158)
+  abstrct 284/300  (4640s, empty=160)
+  abstrct 288/300  (4721s, empty=162)
+  abstrct 292/300  (4801s, empty=165)
+  abstrct 296/300  (4883s, empty=169)
+  abstrct 300/300  (4964s, empty=171)
+
+  ── abstrct ── n=300  empty=171 (57%)  (4965s)
+     component macro-F1: 0.190
+     relation F1:        0.101
+     claim F1:           0.303
+     premise F1:         0.266
+     citation F1:        0.000
+
+  perspectrum 4/227  (83s, empty=4)
+  perspectrum 8/227  (165s, empty=7)
+  perspectrum 12/227  (232s, empty=11)
+  perspectrum 16/227  (298s, empty=15)
+  perspectrum 20/227  (364s, empty=18)
+  perspectrum 24/227  (444s, empty=22)
+  perspectrum 28/227  (527s, empty=26)
+  perspectrum 32/227  (610s, empty=30)
+  perspectrum 36/227  (692s, empty=33)
+  perspectrum 40/227  (775s, empty=37)
+  perspectrum 44/227  (858s, empty=41)
+  perspectrum 48/227  (940s, empty=44)
+  perspectrum 52/227  (1023s, empty=47)
+  perspectrum 56/227  (1106s, empty=51)
+  perspectrum 60/227  (1189s, empty=55)
+  perspectrum 64/227  (1254s, empty=59)
+  perspectrum 68/227  (1318s, empty=63)
+  perspectrum 72/227  (1385s, empty=67)
+  perspectrum 76/227  (1450s, empty=70)
+  perspectrum 80/227  (1517s, empty=74)
+  perspectrum 84/227  (1583s, empty=78)
+  perspectrum 88/227  (1648s, empty=82)
+  perspectrum 92/227  (1715s, empty=85)
+  perspectrum 96/227  (1781s, empty=89)
+  perspectrum 100/227  (1863s, empty=93)
+  perspectrum 104/227  (1946s, empty=96)
+  perspectrum 108/227  (2029s, empty=99)
+  perspectrum 112/227  (2111s, empty=102)
+  perspectrum 116/227  (2191s, empty=106)
+  perspectrum 120/227  (2274s, empty=110)
+  perspectrum 124/227  (2357s, empty=114)
+  perspectrum 128/227  (2437s, empty=118)
+  perspectrum 132/227  (2519s, empty=122)
+  perspectrum 136/227  (2602s, empty=125)
+  perspectrum 140/227  (2668s, empty=129)
+  perspectrum 144/227  (2734s, empty=132)
+  perspectrum 148/227  (2800s, empty=136)
+  perspectrum 152/227  (2866s, empty=139)
+  perspectrum 156/227  (2932s, empty=143)
+  perspectrum 160/227  (2998s, empty=147)
+  perspectrum 164/227  (3065s, empty=151)
+  perspectrum 168/227  (3131s, empty=155)
+  perspectrum 172/227  (3197s, empty=158)
+  perspectrum 176/227  (3263s, empty=161)
+  perspectrum 180/227  (3327s, empty=165)
+  perspectrum 184/227  (3392s, empty=168)
+  perspectrum 188/227  (3458s, empty=172)
+  perspectrum 192/227  (3524s, empty=175)
+  perspectrum 196/227  (3590s, empty=177)
+  perspectrum 200/227  (3654s, empty=181)
+  perspectrum 204/227  (3718s, empty=185)
+  perspectrum 208/227  (3784s, empty=188)
+  perspectrum 212/227  (3850s, empty=192)
+  perspectrum 216/227  (3933s, empty=196)
+  perspectrum 220/227  (4013s, empty=200)
+  perspectrum 224/227  (4096s, empty=204)
+  perspectrum 227/227  (4178s, empty=207)
+
+  ── perspectrum ── n=227  empty=207 (91%)  (4178s)
+     component macro-F1: 0.044
+     relation F1:        0.008
+     claim F1:           0.072
+     premise F1:         0.047
+     citation F1:        0.012
+
+
+=== SUMMARY ===
+  microtext      comp-F1=0.414  rel-F1=0.000  empty=0/11
+  cdcp           comp-F1=0.182  rel-F1=0.000  empty=35/150
+  abstrct        comp-F1=0.190  rel-F1=0.101  empty=171/300
+  perspectrum    comp-F1=0.044  rel-F1=0.008  empty=207/227
+  average        comp-F1=0.207
+
+[eval-v2] summary → eval_logs/phase2beta_v3_eval_full.json

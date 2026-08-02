@@ -1,0 +1,41 @@
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Loading weights:   0%|          | 0/338 [00:00<?, ?it/s]Loading weights: 100%|██████████| 338/338 [00:00<00:00, 3698.22it/s]
+[student:hf:load] base=Qwen/Qwen2.5-1.5B-Instruct + LoRA adapter from phase2_student_beta_qwen1.5b_lora_v4
+loaded v4 (patched _parse_output)
+
+AMPERSAND clean: 2902 rows
+
+label distribution: {2: 1358, 1: 1055, 0: 489}
+
+balanced sample: 150 sentences (50 per class)
+
+[1/150] gold=premise pred=premise c/p=0/2 t=19.1s  'even turned for benefit with a proper level of parental invo'
+[2/150] gold=claim   pred=claim   c/p=2/0 t=14.5s  'It's not just that the Christians defeated the tribes milita'
+[3/150] gold=claim   pred=claim   c/p=2/0 t=13.0s  'less useful because the information is presented in a mobile'
+[4/150] gold=claim   pred=premise c/p=0/2 t=11.5s  'That isn't to say that it would be better or worse than our''
+[5/150] gold=premise pred=claim   c/p=1/0 t=9.8s  'I really don't think that the over 62 demographic has any co'
+[6/150] gold=premise pred=claim   c/p=1/1 t=12.7s  'Purchasing meat from farms known to produce their meat in an'
+[7/150] gold=claim   pred=claim   c/p=1/2 t=14.2s  'if your believing something random people are telling you wi'
+[8/150] gold=non     pred=non     c/p=0/0 t=1.4s  '.But honestly, '
+[15/150] gold=premise pred=claim   c/p=2/0 t=10.0s  'it's hard enough for many people to empathize with *each oth'
+[30/150] gold=premise pred=premise c/p=0/1 t=7.6s  'to petition the government to make regulation changes.'
+[45/150] gold=claim   pred=claim   c/p=2/2 t=20.3s  'On the contrary to the Dunning-Krueger effect you are implyi'
+[60/150] gold=premise pred=claim   c/p=1/2 t=15.8s  'such sentiment should be properly weighed by someone attempt'
+[75/150] gold=non     pred=claim   c/p=2/0 t=11.4s  '.&gt; You probably really do believe America is a better pla'
+[90/150] gold=claim   pred=claim   c/p=1/0 t=8.7s  'For the sake of this thread, we'll exclude children with med'
+[105/150] gold=premise pred=claim   c/p=1/0 t=7.6s  'living on is better than just about any death'
+[120/150] gold=non     pred=premise c/p=0/1 t=7.9s  'That counts as a &#8710;!'
+[135/150] gold=claim   pred=claim   c/p=1/0 t=7.9s  'It's either the extreme left, or the extreme right.'
+[150/150] gold=non     pred=premise c/p=0/2 t=11.1s  '.Beyond that, '
+
+=== BINARY IS-ARG (arg vs non) ===
+F1=0.819 P=0.708 R=0.970 Acc=0.713
+TP=97 FP=40 FN=3 TN=10
+
+=== TERNARY (non / premise / claim) ===
+  non      F1=0.317 P=0.769 R=0.200 (tp=10 fp=3 fn=40)
+  premise  F1=0.258 P=0.279 R=0.240 (tp=12 fp=31 fn=38)
+  claim    F1=0.458 P=0.351 R=0.660 (tp=33 fp=61 fn=17)
+MACRO F1 = 0.345
+
+wall: 29.9 min

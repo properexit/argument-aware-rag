@@ -1,6 +1,4 @@
-# ============================================================
 # Python
-# ============================================================
 __pycache__/
 *.py[cod]
 *$py.class
@@ -10,9 +8,7 @@ __pycache__/
 venv/
 env/
 
-# ============================================================
 # OS / editor cruft
-# ============================================================
 .DS_Store
 Thumbs.db
 .vscode/
@@ -22,83 +18,65 @@ Thumbs.db
 .ipynb_checkpoints/
 *.ipynb_meta
 
-# ============================================================
-# Project data
-# (LIARArg CSV + every parsed split: stratified, LIAR-aligned, future)
-# The dataset has its own license — never ship it in the repo.
-# ============================================================
-data/data.csv
-data/**/*.jsonl
-data_*/**/*.jsonl
-data_liar/
-
-# ============================================================
-# Retrieval indices — large dense-embedding matrices (~80–150 MB)
-# Includes original outputs/index/ and any future outputs/index_*
-# ============================================================
+# Retrieval indexes (rebuildable in minutes; ~570 MB combined)
+# See README "Rebuilding retrieval indexes" for how to regenerate.
 outputs/index/
 outputs/index_*/
 
-# ============================================================
-# Pipeline run outputs (predictions + per-claim audit files)
-# Contain snippets of the source data, so should never be checked
-# in. Regenerable locally from code + data + LLM.
-# Applies to outputs/results/ and any future outputs/results_*/
-# ============================================================
-outputs/results/predictions*.jsonl
-outputs/results/audit.csv
-outputs/results/audit.md
-outputs/results_*/predictions*.jsonl
-outputs/results_*/audit.csv
-outputs/results_*/audit.md
+# Model weights (published to HuggingFace as ArgParser-v1..v4)
+# We track only the small metadata: config.json, tokenizer.json,
+# adapter_config.json, train.log, phase2_metrics.json, README.md.
+models/**/*.safetensors
+models/**/pytorch_model*.bin
+models/**/optimizer.bin
+models/**/scheduler.bin
+models/**/*.pt
+models/**/*.pth
+models/**/*.gguf
+models/**/checkpoint-*/
+# Tokenizers can be regenerated with AutoTokenizer.from_pretrained(base_id).
+# Excluded to save ~44 MB across the four v1..v4 model dirs.
+models/**/tokenizer.json
 
-# Snapshots created with cp -r outputs/results outputs/results_*_FINAL_*
-# (timestamped backups of clean runs). Whole snapshot dirs are
-# excluded — too big and contain the full predictions.jsonl files.
-outputs/results_*_FINAL_*/
+# Data + heavy outputs are on Google Drive, not in this repo.
+# See README "Data setup" for the link and extraction instructions.
+data/
+phase2_data/
+phase2_data_liar/
+outputs/
 
-# ============================================================
-# Logs (overnight run output, can be huge)
-# ============================================================
-*.log
-outputs/logs/
+# Paper is kept out of the code repo for now.
+project_report/
 
-# ============================================================
-# Caches and downloaded model weights
-# ============================================================
+# HuggingFace / model caches
 .cache/
-~/.cache/
 hf_cache/
 .huggingface/
+~/.cache/
 
-# ============================================================
-# Cloned reference repos (e.g. Wang 2025a code clone for inspection)
-# ============================================================
+# Cloned reference repos (kept locally for inspection, not shipped)
 wang2025a/
 reference_repos/
 
-# ============================================================
-# Phase 2 generated artifacts (regenerable from code + data)
-# Dataset assembly output, silver annotations, trained models.
-# All written under user-configurable output_dir / student_output_dir,
-# which we conventionally prefix with `phase2_`.
-# ============================================================
-phase2_data*/
-phase2_student*/
-
-# ============================================================
-# Local notes / drafts not meant for the repo
-# ============================================================
+# Local notes / drafts not for the repo
 notes_local.md
 scratch/
+cleanup_phase_a.sh
 
-# ============================================================
-# What IS tracked (kept for paper / reproducibility):
-#   - all of src/ and scripts/
-#   - config.yaml, requirements.txt, LICENSE, README.md, NEXT_STEPS.md
-#   - SUPERVISOR_MEETING_*.md
-#   - outputs/results/metrics.json
-#   - outputs/results/worked_example.md
-#   - outputs/results_*/metrics.json
-#   - outputs/results_*/worked_example.md
-# ============================================================
+# LaTeX build artifacts
+project_report/*.aux
+project_report/*.log
+project_report/*.out
+project_report/*.bbl
+project_report/*.blg
+project_report/*.toc
+project_report/*.fls
+project_report/*.fdb_latexmk
+project_report/*.synctex.gz
+
+# Things we DO track (kept for reproducibility):
+#   - src/, scripts/, configs/, notebooks/
+#   - README.md, requirements.txt
+#   - models/*/*.json, *.log, README.md (weights on HF, tokenizer regenerable)
+#   - eval_logs/ (training + OOD probe logs)
+#   - fixtures/ (tiny CI test data)

@@ -18,9 +18,7 @@ import numpy as np
 from rank_bm25 import BM25Okapi
 
 
-# ---------------------------------------------------------------------------
 # Passage representation
-# ---------------------------------------------------------------------------
 
 @dataclass
 class Passage:
@@ -41,9 +39,7 @@ class RetrievedPassage:
     retriever: str           # "bm25" | "dense" | "rrf"
 
 
-# ---------------------------------------------------------------------------
 # Corpus building
-# ---------------------------------------------------------------------------
 
 _PARA_PATTERN = re.compile(r"\n+")
 _WORD_RE = re.compile(r"[A-Za-z0-9']+")
@@ -109,17 +105,13 @@ def build_corpus_from_dataframe(df) -> list[Passage]:
     return passages
 
 
-# ---------------------------------------------------------------------------
 # Tokeniser
-# ---------------------------------------------------------------------------
 
 def _tokenise(text: str) -> list[str]:
     return [t.lower() for t in _WORD_RE.findall(text or "")]
 
 
-# ---------------------------------------------------------------------------
 # Hybrid retriever
-# ---------------------------------------------------------------------------
 
 class HybridRetriever:
     """BM25 + dense retriever fused with Reciprocal Rank Fusion."""
@@ -147,7 +139,7 @@ class HybridRetriever:
         self._tokenised: list[list[str]] | None = None
         self._passage_id_to_idx = {p.passage_id: i for i, p in enumerate(passages)}
 
-    # -- index build -------------------------------------------------------
+    # index build
 
     def build(self, dense_batch_size: int = 64, verbose: bool = True) -> None:
         if self.use_bm25:
@@ -172,7 +164,7 @@ class HybridRetriever:
                 normalize_embeddings=True,
             )
 
-    # -- single-retriever search ------------------------------------------
+    # single-retriever search
 
     def _bm25_search(self, query: str, top_k: int) -> list[tuple[int, float]]:
         scores = self._bm25.get_scores(_tokenise(query))
@@ -189,7 +181,7 @@ class HybridRetriever:
         idx = np.argsort(-sims)[:top_k]
         return [(int(i), float(sims[i])) for i in idx]
 
-    # -- fusion ------------------------------------------------------------
+    # fusion
 
     def _rrf(
         self,
@@ -203,7 +195,7 @@ class HybridRetriever:
             scores[idx] = scores.get(idx, 0.0) + 1.0 / (self.rrf_k + rank + 1)
         return sorted(scores.items(), key=lambda x: -x[1])
 
-    # -- public API --------------------------------------------------------
+    # public API
 
     def search(
         self,
@@ -244,7 +236,7 @@ class HybridRetriever:
                 break
         return out
 
-    # -- persistence -------------------------------------------------------
+    # persistence
 
     def save(self, out_dir: str) -> None:
         os.makedirs(out_dir, exist_ok=True)

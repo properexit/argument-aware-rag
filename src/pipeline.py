@@ -53,9 +53,7 @@ class ArgAwareRAGPipeline:
         self.top_k_per_query = top_k_per_query
         self.final_top_k_per_role = final_top_k_per_role
 
-    # ------------------------------------------------------------------
     # Argument-aware mode
-    # ------------------------------------------------------------------
 
     def run(self, row: LIARArgRow) -> PipelineResult:
         struct: ArgStructure = self.parser.parse(row.id)
@@ -129,9 +127,7 @@ class ArgAwareRAGPipeline:
             },
         )
 
-    # ------------------------------------------------------------------
     # Flat-RAG baseline (single topical query, no role re-ranking)
-    # ------------------------------------------------------------------
 
     def run_flat(self, row: LIARArgRow) -> PipelineResult:
         struct: ArgStructure = self.parser.parse(row.id)

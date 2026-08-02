@@ -132,7 +132,7 @@ def main() -> int:
     print(f"  flat-RAG  accuracy:  {flat_correct}/{n} = {flat_correct/n:.2%}")
     print(f"  net arg-aware lift:  {(arg_correct - flat_correct)/n:+.2%}")
 
-    # ---- 3-way collapsed view -------------------------------------------
+    # 3-way collapsed view
     arg_3w_correct = sum(
         1 for r in rows if THREEWAY.get(r["arg_pred"]) == THREEWAY.get(r["gold"])
     )

@@ -1,0 +1,44 @@
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Loading weights:   0%|          | 0/338 [00:00<?, ?it/s]Loading weights:  55%|█████▌    | 187/338 [00:00<00:00, 1868.89it/s]Loading weights: 100%|██████████| 338/338 [00:00<00:00, 2579.68it/s]
+[student:hf:load] base=Qwen/Qwen2.5-1.5B-Instruct + LoRA adapter from phase2_student_beta_qwen1.5b_lora_v4
+loaded v4 (patched _parse_output)
+
+<stdin>:19: DtypeWarning: Columns (17) have mixed types. Specify dtype option on import or set low_memory=False.
+PERSUADE test rows: 112117, essays: 10402
+
+essays with usable gold: 10402
+
+sample: 25 essays
+
+[1/25] 2D0CDBC81DC0: pred_c/p=8/15 gold_c/p=5/3 t=303s
+[2/25] 0A058E762E78: pred_c/p=1/5 gold_c/p=5/3 t=49s
+[3/25] 6FEEDAD42CBA: pred_c/p=1/2 gold_c/p=6/4 t=31s
+[4/25] 6374A775E3FD: pred_c/p=5/17 gold_c/p=4/4 t=220s
+[5/25] 5B4AE145379C: pred_c/p=2/23 gold_c/p=6/4 t=234s
+[6/25] 38D029FA4908: pred_c/p=11/8 gold_c/p=0/1 t=175s
+[7/25] 29F0053BC75F: pred_c/p=14/10 gold_c/p=5/4 t=208s
+[8/25] DBDCC2CAB0BD: pred_c/p=2/10 gold_c/p=2/1 t=75s
+[9/25] 22BCA723AFF7: pred_c/p=4/19 gold_c/p=8/3 t=273s
+[10/25] EE84462914A3: pred_c/p=2/3 gold_c/p=4/2 t=55s
+[11/25] AA0C42595227: pred_c/p=11/7 gold_c/p=5/3 t=173s
+[12/25] 0CAC184297FF: pred_c/p=16/9 gold_c/p=5/3 t=247s
+[13/25] 0BD5B3393A28: pred_c/p=7/0 gold_c/p=4/1 t=63s
+[14/25] 261410C78D28: pred_c/p=6/3 gold_c/p=3/3 t=111s
+[15/25] 595BF7E204FD: pred_c/p=8/0 gold_c/p=5/2 t=59s
+[16/25] 5F05C507412C: pred_c/p=10/0 gold_c/p=5/2 t=67s
+[17/25] CC5B9296DE9B: pred_c/p=1/2 gold_c/p=4/2 t=32s
+[18/25] F2F916FE8E1C: pred_c/p=5/12 gold_c/p=4/2 t=206s
+[19/25] 0A7EE102DFCB: pred_c/p=18/26 gold_c/p=8/4 t=395s
+[20/25] E26DFEF5BA3B: pred_c/p=2/8 gold_c/p=2/1 t=101s
+[21/25] 513C8CADC353: pred_c/p=14/10 gold_c/p=5/2 t=259s
+[22/25] DBB590C34361: pred_c/p=24/22 gold_c/p=8/4 t=405s
+[23/25] A937C2FACC75: pred_c/p=5/6 gold_c/p=6/2 t=88s
+[24/25] 5A412BB760A7: pred_c/p=13/8 gold_c/p=5/2 t=182s
+[25/25] B4E9FFCFC9FB: pred_c/p=1/3 gold_c/p=8/4 t=46s
+
+=== PERSUADE 2.0 (non-empty 25/25) ===
+claim   F1=0.351  P=0.288  R=0.451  (tp=55 fp=136 fn=67)
+premise F1=0.034  P=0.022  R=0.076  (tp=5 fp=223 fn=61)
+COMPONENT F1 (macro): 0.193
+extraction rate: 86/188 = 45.7%
+wall: 67.6 min

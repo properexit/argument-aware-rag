@@ -1,0 +1,48 @@
+{
+  "config": "configs/phase2_beta_qwen1.5b_lora_v3.yaml",
+  "model_dir": "phase2_student_beta_qwen1.5b_lora_v3",
+  "cap_per_domain": 50,
+  "batch_size": 4,
+  "per_domain": {
+    "microtext": {
+      "n": 11,
+      "empty": 0,
+      "comp_f1": 0.41414141414141414,
+      "rel_f1": 0.0,
+      "claim_f1": 0.5151515151515151,
+      "premise_f1": 0.7272727272727273,
+      "citation_f1": 0.0,
+      "wall_sec": 116.52065587043762
+    },
+    "cdcp": {
+      "n": 50,
+      "empty": 7,
+      "comp_f1": 0.2193852073852074,
+      "rel_f1": 0.0,
+      "claim_f1": 0.5068381618381619,
+      "premise_f1": 0.15131746031746032,
+      "citation_f1": 0.0,
+      "wall_sec": 660.1635615825653
+    },
+    "abstrct": {
+      "n": 50,
+      "empty": 21,
+      "comp_f1": 0.24915247715247715,
+      "rel_f1": 0.10263492063492062,
+      "claim_f1": 0.3933333333333333,
+      "premise_f1": 0.3541240981240982,
+      "citation_f1": 0.0,
+      "wall_sec": 918.2798335552216
+    },
+    "perspectrum": {
+      "n": 50,
+      "empty": 46,
+      "comp_f1": 0.034126984126984124,
+      "rel_f1": 0.0,
+      "claim_f1": 0.06333333333333332,
+      "premise_f1": 0.03904761904761904,
+      "citation_f1": 0.0,
+      "wall_sec": 940.9739649295807
+    }
+  }
+}

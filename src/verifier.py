@@ -46,9 +46,7 @@ class Verdict:
     evidence_used: list[dict]
 
 
-# ---------------------------------------------------------------------------
 # Stub backend (rule-based)
-# ---------------------------------------------------------------------------
 
 def _stub_verdict(role_evidence: dict[str, list[RerankedPassage]]) -> Verdict:
     """Map role-balance to a label without calling an LLM.
@@ -138,9 +136,7 @@ def _stub_verdict(role_evidence: dict[str, list[RerankedPassage]]) -> Verdict:
     return Verdict(label=label, rationale=rationale, evidence_used=evidence)
 
 
-# ---------------------------------------------------------------------------
 # Ollama backend
-# ---------------------------------------------------------------------------
 
 _SYSTEM_PROMPT = """You are a PolitiFact-style fact-checking analyst. You will receive:
 - A CLAIM being fact-checked
@@ -558,9 +554,7 @@ def _ollama_verdict(
     return Verdict(label=label, rationale=rationale or content, evidence_used=evidence)
 
 
-# ---------------------------------------------------------------------------
 # Public API
-# ---------------------------------------------------------------------------
 
 class VerdictSynthesiser:
 

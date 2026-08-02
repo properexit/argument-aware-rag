@@ -1,11 +1,28 @@
 pandas>=2.0
 numpy>=1.24
 scikit-learn>=1.3
+
+# Retrieval
 rank-bm25>=0.2.2
 sentence-transformers>=2.5
+
+# LLM stack for Phase 2 (student inference, adapter loading, teacher API)
 torch>=2.0
 transformers>=4.40
+peft>=0.10
+accelerate>=0.30
+huggingface_hub>=0.20
+datasets>=2.14
+
+# NLP utilities
 nltk>=3.8
 pyyaml>=6.0
 tqdm>=4.65
 requests>=2.31
+
+# Optional: Cerebras API (Phase 2-alpha silver generation)
+# Only needed if you re-run the teacher; skip if you use the shipped silver labels.
+# cerebras-cloud-sdk>=1.0
+
+# Optional: Groq API (Groq zero-shot baseline in scripts/baselines/groq_zeroshot.py)
+# groq>=0.10

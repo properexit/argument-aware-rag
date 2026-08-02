@@ -37,7 +37,7 @@ student:
   max_target_len: 384
   batch_size: 1
   grad_accum: 32                   # effective batch 32, same as v2
-  learning_rate: 0.0001            # ½ of v2's LR — gentler continual update
+  learning_rate: 0.0001            # ½ of v2's LR -- gentler continual update
   weight_decay: 0.01
   warmup_ratio: 0.05               # minimal warmup since we're resuming
   num_epochs: 1                    # just one more pass

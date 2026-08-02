@@ -66,7 +66,7 @@ class ArgParserLLM:
         self.row_to_statement = row_to_statement or row_to_text
         self.cfg = cfg or ArgParserLLMConfig()
 
-    # ─────────── Phase 1 compatibility ───────────
+    # Phase 1 compatibility
     def parse(self, row_id: int):
         """Same signature as GoldArgParser.parse(row_id)."""
         if self.row_to_text is None:
@@ -79,12 +79,12 @@ class ArgParserLLM:
                      if self.row_to_statement else text)
         return self._parse_text_with_statement(text, statement)
 
-    # ─────────── Standalone / cross-domain ───────────
+    # Standalone / cross-domain
     def parse_text(self, text: str, statement: Optional[str] = None):
         """Parse arbitrary text. Useful for ARIES held-out evaluation."""
         return self._parse_text_with_statement(text, statement or text)
 
-    # ─────────── Internal: dict → Phase 1 typed ───────────
+    # Internal: dict → Phase 1 typed
     def _parse_text_with_statement(self, text: str, statement: str):
         structure_dict, _reasoning = self.student.predict(text)
         return self._dict_to_typed(structure_dict, statement)
@@ -142,7 +142,6 @@ class ArgParserLLM:
         )
 
 
-# ════════════════════════════════════════════════════════════════════════════
 # FrozenArgParserLLM — drop-in for GoldArgParser, but reads pre-computed
 # predictions instead of dereferencing CSV columns.
 #
@@ -159,7 +158,6 @@ class ArgParserLLM:
 # This separates the GPU-heavy parser inference (uni server) from the
 # Ollama-heavy verifier inference (Mac), and makes the parser stage
 # reproducible: re-running Phase 1 doesn't re-invoke the LLM.
-# ════════════════════════════════════════════════════════════════════════════
 
 import json as _json
 from pathlib import Path as _Path

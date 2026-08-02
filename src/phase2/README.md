@@ -1,8 +1,8 @@
-# Phase 2 — ArgParserLLM (learned cross-domain argument parser)
+# Phase 2 -- ArgParserLLM (learned cross-domain argument parser)
 
 This subsystem replaces Phase 1's `GoldArgParser` with a learned parser
 that works on arbitrary text (not just LIARArg rows). The design goal is
-that Phase 1 doesn't need to know which parser is plugged in — same
+that Phase 1 doesn't need to know which parser is plugged in -- same
 `.parse()` interface, same `ArgStructure` output type.
 
 ## What's in here
@@ -19,7 +19,7 @@ src/phase2/
 └── README.md            this file
 
 configs/
-├── phase2_dummy.yaml         all dummies — CPU, ~30 seconds
+├── phase2_dummy.yaml         all dummies -- CPU, ~30 seconds
 ├── phase2_groq_flan.yaml     Groq Llama-70B teacher (~100K tok/day cap)
 ├── phase2_hfinf_flan.yaml    HF Inference Llama-70B (free, ~1000 req/day)
 └── phase2_local7b_flan.yaml  fully offline Qwen-7B (4-bit) on local GPU
@@ -36,7 +36,7 @@ scripts/phase2/
 
 Two interfaces are the swap seams:
 
-- **`AnnotatorBase`** (`teacher.py`) — `annotate(text, source)` returns
+- **`AnnotatorBase`** (`teacher.py`) -- `annotate(text, source)` returns
   `(ArgStructureDict, reasoning)`. Ships with four backends:
   `DummyTeacher`, `GroqTeacher` (Llama-70B via Groq, 100K tok/day cap),
   `HFInferenceTeacher` (Llama-70B / Qwen-72B via HuggingFace's free
@@ -44,7 +44,7 @@ Two interfaces are the swap seams:
   or Llama-3B running locally on the same GPU, no API needed).
   Add new ones (OpenAI, Anthropic, vLLM-hosted) by subclassing.
 
-- **`StudentTrainerBase`** (`student.py`) — `train(records, out_dir)`
+- **`StudentTrainerBase`** (`student.py`) -- `train(records, out_dir)`
   + `load(path)` + `predict(text)`. Add a new student backend (PEFT
   LoRA, accelerate-distributed, etc.) by subclassing and registering
   in `build_student`.
@@ -53,7 +53,7 @@ Both have `Dummy*` and real implementations. Dummies let you smoke-test
 the full pipeline (data → annotate → train → eval → Phase 1 integration)
 in seconds, with no GPU and no API key.
 
-## Quick start — dummy smoke test (laptop)
+## Quick start -- dummy smoke test (laptop)
 
 ```bash
 # from repo root, with .venv activated
@@ -68,7 +68,7 @@ the dummy student "trains" by writing a marker JSON, the dummy
 predictor returns trivial structures. The point is to confirm all
 files import cleanly and the metrics pipeline produces a JSON.
 
-## Real run — GPU server
+## Real run -- GPU server
 
 1. **Env setup** (on the JupyterHub notebook, one-time):
    ```bash
@@ -127,24 +127,24 @@ pipeline = ArgAwareRAGPipeline(arg_parser=parser, ...)  # rest as Phase 1
 ```
 
 The gap between gold-parser and learned-parser Phase 1 macro-F1 is
-the headline number — that's what we report.
+the headline number -- that's what we report.
 
 ## Datasets
 
-- **AAEC** (Stab & Gurevych, 2014) — student essays, argument graphs
-- **AbstRCT** (Mayer et al., 2020) — RCT abstracts, evidence/claim
-- **LIARArg** (Wang et al., 2025a) — political claims, our anchor
+- **AAEC** (Stab & Gurevych, 2014) -- student essays, argument graphs
+- **AbstRCT** (Mayer et al., 2020) -- RCT abstracts, evidence/claim
+- **LIARArg** (Wang et al., 2025a) -- political claims, our anchor
 - **ARIES sources** (Cuties, US2016, Microtext, CDCP, ACSP, ...)
-  — un-annotated, used for silver labels
+  -- un-annotated, used for silver labels
 
-Loaders for the gold sources are currently stubs in `dataset.py` —
+Loaders for the gold sources are currently stubs in `dataset.py` -- 
 implement them when the data is in hand. The synthetic corpus fallback
 covers smoke testing in the meantime.
 
 ## What this scaffold deliberately defers
 
 - Real loaders for AAEC/AbstRCT/LIARArg (stubs raise NotImplementedError
-  with a clear message — fill in when needed)
+  with a clear message -- fill in when needed)
 - LoRA / QLoRA configuration in HFTrainer (full fine-tune only for now;
   add `peft.LoraConfig` wiring when 8B+ models become viable)
 - Distributed training (single-GPU only)

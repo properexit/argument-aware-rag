@@ -2,7 +2,7 @@
 #
 # v1 (Qwen-0.5B full FT) baseline: avg comp-F1 = 0.108 across 4 held-out tests.
 # v2 hypothesis: bigger model + longer training context fixes the two big v1
-# failures (AbstRCT 75% empty, PERSPECTRUM 91% empty — both caused by inputs
+# failures (AbstRCT 75% empty, PERSPECTRUM 91% empty -- both caused by inputs
 # overflowing the 512-token training horizon, and 0.5B being too small).
 #
 # Why LoRA: training all 1.5B params would need ~24 GB VRAM; LoRA freezes
@@ -41,7 +41,7 @@ student:
   max_input_len: 1024              # 2x v1 → catches longer AbstRCT/PERSPECTRUM
   max_target_len: 384              # generous JSON budget
   # Qwen-1.5B's 152K vocab makes the cross-entropy loss intermediate
-  # ~1.7 GB at fp32 for [batch=2, seq=1408, vocab=152K] — overflowed
+  # ~1.7 GB at fp32 for [batch=2, seq=1408, vocab=152K] -- overflowed
   # the 11 GB ceiling. Batch=1 halves that to ~850 MB and fits comfortably.
   # Effective batch stays at 32 via grad_accum doubling.
   batch_size: 1
@@ -51,7 +51,7 @@ student:
   warmup_ratio: 0.1
   num_epochs: 3
   fp16: true
-  gradient_checkpointing: true     # ESSENTIAL at seq 1024 — Pascal attention is O(seq²)
+  gradient_checkpointing: true     # ESSENTIAL at seq 1024 -- Pascal attention is O(seq²)
   optim: adafactor
   seed: 42
   eval_every_steps: 0

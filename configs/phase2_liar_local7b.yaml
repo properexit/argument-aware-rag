@@ -1,4 +1,4 @@
-# Phase 2a — first real run: LIARArg gold ONLY (no silver, no ARIES yet).
+# Phase 2a -- first real run: LIARArg gold ONLY (no silver, no ARIES yet).
 # Local Qwen-7B teacher is configured but unused this run (no silver
 # sources). Pure gold-fine-tune of Flan-T5-Large on LIARArg's canonical
 # train split, evaluated on the canonical test split.
@@ -16,7 +16,7 @@ run_name: phase2_liar_local7b
 dataset:
   aaec_path: ""
   abstrct_path: ""
-  liararg_path: data       # ← directory containing {train,val,test}.jsonl
+  liararg_path: data  # directory containing {train,val,test}.jsonl
   aries_clean_path: ""
   silver_sources: []
   samples_per_silver_source: 0
@@ -52,7 +52,7 @@ student:
   num_epochs: 3               # 3 is usually enough for T5 fine-tune; 5 was overkill
   # CRITICAL: T5 family models (incl. Flan-T5) are known to overflow in fp16
   # because RMSNorm's rsqrt op produces NaN activations. AMP's grad scaler
-  # then collapses the LR to 0 — silent training failure with hardware-busy
+  # then collapses the LR to 0 -- silent training failure with hardware-busy
   # symptoms. On Pascal (no bf16), the only safe dtype is fp32.
   fp16: false
   gradient_checkpointing: true

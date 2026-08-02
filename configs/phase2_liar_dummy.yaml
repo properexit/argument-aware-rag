@@ -1,4 +1,4 @@
-# Same data path as phase2_liar_local7b, but with dummy student — for
+# Same data path as phase2_liar_local7b, but with dummy student -- for
 # CPU-only validation of the data → eval pipeline on real LIARArg.
 run_name: phase2_liar_dummy
 

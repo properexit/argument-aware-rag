@@ -30,9 +30,7 @@ from .schema import (
 )
 
 
-# ────────────────────────────────────────────────────────────────────────────
 # Source loaders — stubs for now, populate when real data is available.
-# ────────────────────────────────────────────────────────────────────────────
 
 def _stub_loader_warning(source: str) -> None:
     print(f"[dataset] {source} path not configured — skipping. "
@@ -190,10 +188,8 @@ def load_aries_for_silver(
     return rows
 
 
-# ────────────────────────────────────────────────────────────────────────────
 # Synthetic corpus — used when no real datasets are configured.
 # Lets you run the entire Phase 2 pipeline end-to-end on zero real data.
-# ────────────────────────────────────────────────────────────────────────────
 
 _SYNTHETIC_EXAMPLES: list[TrainRecord] = [
     {
@@ -267,9 +263,7 @@ def synthetic_corpus(n: int = 50) -> list[TrainRecord]:
     return out
 
 
-# ────────────────────────────────────────────────────────────────────────────
 # Top-level entry point
-# ────────────────────────────────────────────────────────────────────────────
 
 def assemble_corpus(cfg: DatasetConfig) -> list[TrainRecord]:
     """Build the full Phase 2 training corpus from all configured sources.
@@ -342,9 +336,7 @@ def read_jsonl(path: str | Path) -> list[TrainRecord]:
     return out
 
 
-# ────────────────────────────────────────────────────────────────────────────
 # Phase 2-β unified-corpus loader
-# ────────────────────────────────────────────────────────────────────────────
 
 def load_unified_corpus(
     unified_dir: str | Path,

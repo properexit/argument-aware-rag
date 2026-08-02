@@ -1,0 +1,20 @@
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Loading weights:   0%|          | 0/338 [00:00<?, ?it/s]Loading weights:  59%|█████▉    | 200/338 [00:00<00:00, 1982.77it/s]Loading weights: 100%|██████████| 338/338 [00:00<00:00, 2473.62it/s]
+[student:hf:load] base=Qwen/Qwen2.5-1.5B-Instruct + LoRA adapter from phase2_student_beta_qwen1.5b_lora_v4
+loaded v4 (patched _parse_output)
+
+AURC merged: 0 rows, 0 topics
+
+gold argumentative rate: nan%
+
+balanced sample: 0 sentences
+
+
+=== AURC BINARY IS-ARG EVAL (n=0) ===
+F1=0.000  P=0.000  R=0.000  Acc=0.000
+TP=0  FP=0  FN=0  TN=0
+
+--- per topic ---
+topic                      F1    Acc  TP FP FN TN
+
+wall: 0.0 min

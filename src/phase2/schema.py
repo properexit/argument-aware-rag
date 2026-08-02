@@ -61,9 +61,7 @@ class TrainRecord(TypedDict, total=False):
     domain: str                # Free-form domain tag for cross-domain eval
 
 
-# ────────────────────────────────────────────────────────────────────────────
 # Component / Trainer configs
-# ────────────────────────────────────────────────────────────────────────────
 
 @dataclass
 class TeacherConfig:
@@ -106,12 +104,10 @@ class StudentConfig:
     optim: Literal["adafactor", "adamw_torch", "adamw_torch_fused", "adamw_bnb_8bit"] = "adafactor"
     seed: int = 42
     eval_every_steps: int = 0          # 0 = epoch-level eval
-    # ────────────────────────────────────────────────────────────────────
     # LoRA (Phase 2-β-v2): when use_lora=True, freeze the base model and
     # train low-rank adapter matrices on the attention projections instead.
     # Lets us run Qwen-1.5B+ on 11 GB Pascal (gradients + optimizer state
     # drop from ~6 GB to ~10 MB; only the adapter trains).
-    # ────────────────────────────────────────────────────────────────────
     use_lora: bool = False
     lora_r: int = 16
     lora_alpha: int = 32

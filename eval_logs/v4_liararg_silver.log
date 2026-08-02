@@ -1,0 +1,311 @@
+[v4-silver] 8 keys loaded
+[v4-silver] starting with key #1
+[v4-silver] 2123 LIARArg train rows
+[v4-silver] resuming — 670 silver rows on disk
+[v4-silver] 1453 rows to process
+  25/1453  (5min, 0.08/s, ETA 4.7h)  alive_keys=8/8  empty=2/25 (8%)  with_reasoning=25/25
+  50/1453  (10min, 0.08/s, ETA 4.6h)  alive_keys=8/8  empty=3/50 (6%)  with_reasoning=50/50
+  75/1453  (15min, 0.08/s, ETA 4.5h)  alive_keys=8/8  empty=7/75 (9%)  with_reasoning=75/75
+  100/1453  (20min, 0.08/s, ETA 4.4h)  alive_keys=8/8  empty=10/100 (10%)  with_reasoning=100/100
+  125/1453  (25min, 0.08/s, ETA 4.4h)  alive_keys=8/8  empty=10/125 (8%)  with_reasoning=125/125
+  150/1453  (30min, 0.08/s, ETA 4.3h)  alive_keys=8/8  empty=14/150 (9%)  with_reasoning=150/150
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 10s]
+  [rotate] from key #1 — rate-limit signal
+  [rotate] → key #2
+  175/1453  (35min, 0.08/s, ETA 4.3h)  alive_keys=8/8  empty=15/175 (9%)  with_reasoning=175/175
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 10s]
+  [rotate] from key #2 — rate-limit signal
+  [rotate] → key #3
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 10s]
+  [rotate] from key #3 — rate-limit signal
+  [rotate] → key #4
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 10s]
+  [rotate] from key #4 — rate-limit signal
+  [rotate] → key #5
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 10s]
+  [rotate] from key #5 — rate-limit signal
+  [rotate] → key #6
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 10s]
+  [rotate] from key #6 — rate-limit signal
+  [rotate] → key #7
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 5s]
+  200/1453  (44min, 0.08/s, ETA 4.6h)  alive_keys=8/8  empty=16/200 (8%)  with_reasoning=200/200
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 10s]
+  [rotate] from key #7 — rate-limit signal
+  [rotate] → key #8
+  [teacher:cerebras 429 — sleeping 5s]
+  225/1453  (50min, 0.08/s, ETA 4.5h)  alive_keys=8/8  empty=18/225 (8%)  with_reasoning=225/225
+  250/1453  (55min, 0.08/s, ETA 4.4h)  alive_keys=8/8  empty=21/250 (8%)  with_reasoning=250/250
+  [teacher:cerebras 429 — sleeping 5s]
+  275/1453  (61min, 0.08/s, ETA 4.3h)  alive_keys=8/8  empty=22/275 (8%)  with_reasoning=275/275
+  300/1453  (66min, 0.08/s, ETA 4.2h)  alive_keys=8/8  empty=24/300 (8%)  with_reasoning=300/300
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 5s]
+  325/1453  (71min, 0.08/s, ETA 4.1h)  alive_keys=8/8  empty=26/325 (8%)  with_reasoning=325/325
+  350/1453  (76min, 0.08/s, ETA 4.0h)  alive_keys=8/8  empty=27/350 (8%)  with_reasoning=350/350
+  375/1453  (81min, 0.08/s, ETA 3.9h)  alive_keys=8/8  empty=27/375 (7%)  with_reasoning=375/375
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 10s]
+  400/1453  (87min, 0.08/s, ETA 3.8h)  alive_keys=8/8  empty=29/400 (7%)  with_reasoning=400/400
+  425/1453  (92min, 0.08/s, ETA 3.7h)  alive_keys=8/8  empty=31/425 (7%)  with_reasoning=425/425
+  450/1453  (97min, 0.08/s, ETA 3.6h)  alive_keys=8/8  empty=32/450 (7%)  with_reasoning=450/450
+  475/1453  (102min, 0.08/s, ETA 3.5h)  alive_keys=8/8  empty=33/475 (7%)  with_reasoning=475/475
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 10s]
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 10s]
+  [rotate] from key #8 — rate-limit signal
+  [rotate] → key #1
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 10s]
+  [rotate] from key #1 — rate-limit signal
+  [rotate] → key #2
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 5s]
+  500/1453  (108min, 0.08/s, ETA 3.4h)  alive_keys=8/8  empty=33/500 (7%)  with_reasoning=500/500
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 10s]
+  [rotate] from key #2 — rate-limit signal
+  [rotate] → key #3
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 10s]
+  [rotate] from key #3 — rate-limit signal
+  [rotate] → key #4
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 10s]
+  [rotate] from key #4 — rate-limit signal
+  [rotate] → key #5
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 10s]
+  [rotate] from key #5 — rate-limit signal
+  [rotate] → key #6
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 10s]
+  [rotate] from key #6 — rate-limit signal
+  [rotate] → key #7
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 5s]
+  525/1453  (118min, 0.07/s, ETA 3.5h)  alive_keys=8/8  empty=34/525 (6%)  with_reasoning=525/525
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 10s]
+  [rotate] from key #7 — rate-limit signal
+  [rotate] → key #8
+  550/1453  (124min, 0.07/s, ETA 3.4h)  alive_keys=8/8  empty=35/550 (6%)  with_reasoning=550/550
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 10s]
+  [rotate] from key #8 — rate-limit signal
+  [rotate] → key #1
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 10s]
+  [rotate] from key #1 — rate-limit signal
+  [rotate] → key #2
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 10s]
+  [rotate] from key #2 — rate-limit signal
+  [rotate] → key #3
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 10s]
+  [rotate] from key #3 — rate-limit signal
+  [rotate] → key #4
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 10s]
+  [rotate] from key #4 — rate-limit signal
+  [rotate] → key #5
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 10s]
+  [rotate] from key #5 — rate-limit signal
+  [rotate] → key #6
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 10s]
+  [rotate] from key #6 — rate-limit signal
+  [rotate] → key #7
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 10s]
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 10s]
+  [rotate] from key #7 — rate-limit signal
+  [rotate] → key #8
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 10s]
+  [rotate] from key #8 — rate-limit signal
+  [rotate] → key #1
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 10s]
+  [rotate] from key #1 — rate-limit signal
+  [rotate] → key #2
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 10s]
+  [rotate] from key #2 — rate-limit signal
+  [rotate] → key #3
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 10s]
+  575/1453  (135min, 0.07/s, ETA 3.4h)  alive_keys=8/8  empty=35/575 (6%)  with_reasoning=575/575
+  600/1453  (140min, 0.07/s, ETA 3.3h)  alive_keys=8/8  empty=37/600 (6%)  with_reasoning=600/600
+  625/1453  (145min, 0.07/s, ETA 3.2h)  alive_keys=8/8  empty=40/625 (6%)  with_reasoning=625/625
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 10s]
+  650/1453  (150min, 0.07/s, ETA 3.1h)  alive_keys=8/8  empty=41/650 (6%)  with_reasoning=650/650
+  675/1453  (155min, 0.07/s, ETA 3.0h)  alive_keys=8/8  empty=42/675 (6%)  with_reasoning=675/675
+  700/1453  (160min, 0.07/s, ETA 2.9h)  alive_keys=8/8  empty=42/700 (6%)  with_reasoning=700/700
+  725/1453  (166min, 0.07/s, ETA 2.8h)  alive_keys=8/8  empty=42/725 (6%)  with_reasoning=725/725
+  750/1453  (171min, 0.07/s, ETA 2.7h)  alive_keys=8/8  empty=45/750 (6%)  with_reasoning=750/750
+  [teacher:cerebras 429 — sleeping 5s]
+  775/1453  (176min, 0.07/s, ETA 2.6h)  alive_keys=8/8  empty=46/775 (6%)  with_reasoning=775/775
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 10s]
+  [rotate] from key #3 — rate-limit signal
+  [rotate] → key #4
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 10s]
+  [rotate] from key #4 — rate-limit signal
+  [rotate] → key #5
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 10s]
+  [rotate] from key #5 — rate-limit signal
+  [rotate] → key #6
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 10s]
+  [rotate] from key #6 — rate-limit signal
+  [rotate] → key #7
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 10s]
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 10s]
+  800/1453  (184min, 0.07/s, ETA 2.5h)  alive_keys=8/8  empty=47/800 (6%)  with_reasoning=800/800
+  825/1453  (190min, 0.07/s, ETA 2.4h)  alive_keys=8/8  empty=49/825 (6%)  with_reasoning=825/825
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 10s]
+  [rotate] from key #7 — rate-limit signal
+  [rotate] → key #8
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 10s]
+  850/1453  (196min, 0.07/s, ETA 2.3h)  alive_keys=8/8  empty=49/850 (6%)  with_reasoning=850/850
+  875/1453  (201min, 0.07/s, ETA 2.2h)  alive_keys=8/8  empty=49/875 (6%)  with_reasoning=875/875
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 10s]
+  [rotate] from key #8 — rate-limit signal
+  [rotate] → key #1
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 5s]
+  900/1453  (209min, 0.07/s, ETA 2.1h)  alive_keys=8/8  empty=50/900 (6%)  with_reasoning=900/900
+  925/1453  (214min, 0.07/s, ETA 2.0h)  alive_keys=8/8  empty=52/925 (6%)  with_reasoning=925/925
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 10s]
+  [rotate] from key #1 — rate-limit signal
+  [rotate] → key #2
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 5s]
+  950/1453  (220min, 0.07/s, ETA 1.9h)  alive_keys=8/8  empty=52/950 (5%)  with_reasoning=950/950
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 10s]
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 10s]
+  [rotate] from key #2 — rate-limit signal
+  [rotate] → key #3
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 10s]
+  [rotate] from key #3 — rate-limit signal
+  [rotate] → key #4
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 10s]
+  [teacher:cerebras 429 — sleeping 5s]
+  975/1453  (228min, 0.07/s, ETA 1.9h)  alive_keys=8/8  empty=52/975 (5%)  with_reasoning=975/975
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 10s]
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 10s]
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 10s]
+  [rotate] from key #4 — rate-limit signal
+  [rotate] → key #5
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 10s]
+  [rotate] from key #5 — rate-limit signal
+  [rotate] → key #6
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 10s]
+  [rotate] from key #6 — rate-limit signal
+  [rotate] → key #7
+  [teacher:cerebras 429 — sleeping 5s]
+  1000/1453  (235min, 0.07/s, ETA 1.8h)  alive_keys=8/8  empty=54/1000 (5%)  with_reasoning=1000/1000
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 10s]
+  1025/1453  (241min, 0.07/s, ETA 1.7h)  alive_keys=8/8  empty=54/1025 (5%)  with_reasoning=1025/1025
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 10s]
+  [teacher:cerebras 429 — sleeping 5s]
+  1050/1453  (247min, 0.07/s, ETA 1.6h)  alive_keys=8/8  empty=54/1050 (5%)  with_reasoning=1050/1050
+  1075/1453  (252min, 0.07/s, ETA 1.5h)  alive_keys=8/8  empty=55/1075 (5%)  with_reasoning=1075/1075
+  [teacher:cerebras 429 — sleeping 5s]
+  1100/1453  (257min, 0.07/s, ETA 1.4h)  alive_keys=8/8  empty=55/1100 (5%)  with_reasoning=1100/1100
+  1125/1453  (262min, 0.07/s, ETA 1.3h)  alive_keys=8/8  empty=55/1125 (5%)  with_reasoning=1125/1125
+  1150/1453  (267min, 0.07/s, ETA 1.2h)  alive_keys=8/8  empty=55/1150 (5%)  with_reasoning=1150/1150
+  [teacher:cerebras 429 — sleeping 5s]
+  1175/1453  (273min, 0.07/s, ETA 1.1h)  alive_keys=8/8  empty=56/1175 (5%)  with_reasoning=1175/1175
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 10s]
+  [teacher:cerebras 429 — sleeping 5s]
+  1200/1453  (278min, 0.07/s, ETA 1.0h)  alive_keys=8/8  empty=56/1200 (5%)  with_reasoning=1200/1200
+  [teacher:cerebras 429 — sleeping 5s]
+  1225/1453  (283min, 0.07/s, ETA 0.9h)  alive_keys=8/8  empty=56/1225 (5%)  with_reasoning=1225/1225
+  1250/1453  (289min, 0.07/s, ETA 0.8h)  alive_keys=8/8  empty=57/1250 (5%)  with_reasoning=1250/1250
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 10s]
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 10s]
+  [rotate] from key #7 — rate-limit signal
+  [rotate] → key #8
+  1275/1453  (294min, 0.07/s, ETA 0.7h)  alive_keys=8/8  empty=62/1275 (5%)  with_reasoning=1275/1275
+  1300/1453  (299min, 0.07/s, ETA 0.6h)  alive_keys=8/8  empty=62/1300 (5%)  with_reasoning=1300/1300
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 10s]
+  [teacher:cerebras 429 — sleeping 5s]
+  1325/1453  (305min, 0.07/s, ETA 0.5h)  alive_keys=8/8  empty=62/1325 (5%)  with_reasoning=1325/1325
+  1350/1453  (310min, 0.07/s, ETA 0.4h)  alive_keys=8/8  empty=63/1350 (5%)  with_reasoning=1350/1350
+  1375/1453  (315min, 0.07/s, ETA 0.3h)  alive_keys=8/8  empty=64/1375 (5%)  with_reasoning=1375/1375
+  1400/1453  (320min, 0.07/s, ETA 0.2h)  alive_keys=8/8  empty=65/1400 (5%)  with_reasoning=1400/1400
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 10s]
+  [rotate] from key #8 — rate-limit signal
+  [rotate] → key #1
+  1425/1453  (325min, 0.07/s, ETA 0.1h)  alive_keys=8/8  empty=66/1425 (5%)  with_reasoning=1425/1425
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 10s]
+  [teacher:cerebras 429 — sleeping 5s]
+  [teacher:cerebras 429 — sleeping 10s]
+  [rotate] from key #1 — rate-limit signal
+  [rotate] → key #2
+  1450/1453  (330min, 0.07/s, ETA 0.0h)  alive_keys=8/8  empty=67/1450 (5%)  with_reasoning=1450/1450
+
+=== v4 silver gen DONE ===
+  total: 1453  empty: 67 (4.6%)  with_reasoning: 1453 (100.0%)
+  key #1: calls=247 errors=0 tpd_hit=False
+  key #2: calls=86 errors=0 tpd_hit=False
+  key #3: calls=231 errors=0 tpd_hit=False
+  key #4: calls=23 errors=0 tpd_hit=False
+  key #5: calls=7 errors=0 tpd_hit=False
+  key #6: calls=5 errors=0 tpd_hit=False
+  key #7: calls=370 errors=0 tpd_hit=False
+  key #8: calls=525 errors=0 tpd_hit=False

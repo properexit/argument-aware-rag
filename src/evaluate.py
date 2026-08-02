@@ -26,11 +26,9 @@ INTERMEDIATE = ["Mostly-true", "Half-true", "Barely-true"]
 # Position on the 6-point truthfulness scale (True=0 ... Pants-fire=5)
 LABEL_INDEX = {lab: i for i, lab in enumerate(LABELS)}
 
-# ---------------------------------------------------------------------------
 # 3-way collapsed scheme (LIAR-literature standard).
 # Used for direct comparison against prior work that collapses LIAR's
 # 6-point scale into truth-leaning / mixed / false-leaning buckets.
-# ---------------------------------------------------------------------------
 THREEWAY_LABELS = ["true-leaning", "mixed", "false-leaning"]
 LABEL_TO_3WAY = {
     "True":         "true-leaning",
@@ -118,7 +116,7 @@ def compute_metrics(
     distances = [d for d in distances if d is not None]
     mae = (sum(distances) / len(distances)) if distances else None
 
-    # ---- 3-way collapsed metrics (LIAR-standard comparison) ---------------
+    # 3-way collapsed metrics (LIAR-standard comparison)
     y_true_3w = [to_3way(t) for t in y_true]
     y_pred_3w = [to_3way(p) for p in y_pred]
     acc_3way = accuracy_score(y_true_3w, y_pred_3w)

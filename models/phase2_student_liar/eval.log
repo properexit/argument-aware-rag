@@ -1,0 +1,25 @@
+[eval] running student on 425 test records
+Loading weights:   0%|          | 0/558 [00:00<?, ?it/s]Loading weights: 100%|██████████| 558/558 [00:00<00:00, 8046.36it/s]
+[transformers] The tied weights mapping and config for this model specifies to tie shared.weight to lm_head.weight, but both are present in the checkpoints with different values, so we will NOT tie them. You should update the config with `tie_word_embeddings=False` to silence this warning.
+  [eval] 25/425
+  [eval] 50/425
+  [eval] 75/425
+  [eval] 100/425
+  [eval] 125/425
+  [eval] 150/425
+  [eval] 175/425
+  [eval] 200/425
+  [eval] 225/425
+  [eval] 250/425
+  [eval] 275/425
+  [eval] 300/425
+  [eval] 325/425
+  [eval] 350/425
+  [eval] 375/425
+  [eval] 400/425
+  [eval] 425/425
+[eval] component macro-F1: 0.000
+[eval] relation F1:        0.000
+[eval] by domain:
+  - politics: n=425, relation-F1=0.000
+[eval] saved metrics to phase2_student_liar/phase2_metrics.json
