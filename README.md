@@ -15,24 +15,31 @@ Write-up and full per-run outputs are hosted separately (see Data setup).
 ## Pipeline (five stages)
 
 ```
-[claim + supporting article]
-        |
-        v
-1. Argument parser          ->  {claims, premises, support/attack relations}
-        |
-        v
-2. Role-targeted query gen  ->  one query per argument relation
-        |
-        v
-3. Hybrid retriever         ->  BM25 + dense (MiniLM) fused via RRF
-        |
-        v
-4. NLI reranker             ->  role-fit scoring via DeBERTa-v3-small
-        |
-        v
-5. LLM verdict synthesiser  ->  Qwen-14B + probabilistic 6-label prior
-                                -> {True, Mostly-true, Half-true,
-                                    Barely-true, False, Pants-fire}
+[ Claim + Supporting Article ]
+              │
+              ▼
+  1. Argument Parser
+     └── Output: { claims, premises, support / attack relations }
+              │
+              ▼
+  2. Role-Targeted Query Generator
+     └── Output: 1 Query per Argument Relation
+              │
+              ▼
+  3. Hybrid Retriever
+     ├── Sparse: BM25
+     ├── Dense:  MiniLM
+     └── Fusion: Reciprocal Rank Fusion (RRF)
+              │
+              ▼
+  4. NLI Reranker
+     └── Role-Fit Scoring via DeBERTa-v3-small
+              │
+              ▼
+  5. LLM Verdict Synthesizer
+     ├── Model: Qwen-14B
+     ├── Prior: Probabilistic 6-Label Prior
+     └── Output: { True, Mostly-True, Half-True, Barely-True, False, Pants-Fire }
 ```
 
 Stage 1 is the parser. Phase 1 uses gold LIARArg annotations; Phase 2
